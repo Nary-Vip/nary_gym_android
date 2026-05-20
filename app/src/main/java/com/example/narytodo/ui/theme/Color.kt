@@ -11,3 +11,12 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val grey = Color(0xFF6C7570)
+
+val Primary     = Color(0xFF1A1A2E)
+val Accent      = Color(0xFFE94560)
+val CardBg      = Color(0xFFF7F7F9)
+val FieldBg     = Color(0xFFFFFFFF)
+val LabelColor  = Color(0xFF9E9EA7)
+val TextColor   = Color(0xFF1A1A2E)
+val DividerColor= Color(0xFFEEEEF2)
+

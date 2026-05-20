@@ -40,4 +40,10 @@ interface WorkOutsDao {
 
     @Query("SELECT * FROM workouts WHERE workOutType = :type")
     fun getWorkoutsByType(type: WorkOutType): Flow<List<WorkOuts>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllDays(days: List<WorkOutsDay>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllWorkouts(workouts: List<WorkOuts>)
 }

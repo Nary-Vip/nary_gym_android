@@ -1,62 +1,67 @@
 package com.example.narytodo.ui.screens
 
 import android.net.Uri
-import android.view.View
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AllInbox
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
-import com.example.narytodo.data.room_db.TaskItem
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.ui.theme.grey
+import com.example.narytodo.utils.WorkoutCycle
+import com.example.narytodo.utils.WorkoutResources
 import com.example.narytodo.utils.copyImageToInternalStorage
-import com.example.narytodo.viewModel.TaskViewModel
 import com.example.narytodo.viewModel.WorkOutViewModel
 
 @Composable
 fun AllWorkOutListing(viewModel: WorkOutViewModel) {
     val workOuts by viewModel.allWorkouts.collectAsState()
+    val context = LocalContext.current
 
     var currentWorkout by remember {
         mutableStateOf(
@@ -69,81 +74,84 @@ fun AllWorkOutListing(viewModel: WorkOutViewModel) {
         )
     }
 
-    var workOutToEdit by remember { mutableStateOf<WorkOuts?>(null) }
-
+    var pageIndex by remember { mutableIntStateOf(0) }
     var showEditorDialog by remember { mutableStateOf(false) }
 
+    val workoutCycle = WorkoutCycle(context)
+    var workoutType by remember { mutableStateOf(workoutCycle.getCurrentDayWorkout()) }
+
     Scaffold(
+        bottomBar = {
+            BottomAppBar() {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = {
+                        pageIndex = 0
+                    }) {
+                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today")
+                    }
+
+                    IconButton(onClick = {
+                        pageIndex = 1
+                    }) {
+                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today")
+                    }
+                    IconButton(onClick = {
+                        pageIndex = 2
+                    }) {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today")
+                    }
+
+                }
+            }
+        },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    workOutToEdit = null
-                    showEditorDialog = true
-                }, shape = RoundedCornerShape(20.dp),
-                containerColor = grey,
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(10.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Button")
-                Text("New workOuts", modifier = Modifier.padding(start = 8.dp))
+            if (pageIndex == 1) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        showEditorDialog = true
+                    }, shape = RoundedCornerShape(20.dp),
+                    containerColor = grey,
+                    contentColor = Color.White,
+                    elevation = FloatingActionButtonDefaults.elevation(10.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Button")
+                    Text("New workOuts", modifier = Modifier.padding(start = 8.dp))
+                }
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp)
-                .fillMaxSize(),
+        if (pageIndex == 0) {
+            IndividualDayWorkout(
+                workOutType = workoutType,
+                viewModel = viewModel,
+                innerPadding = innerPadding,
 
-            ) {
-            Text(
-                text = "Available Workouts",
-                modifier = Modifier.padding(top = 32.dp),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
+                onComplete = {
+                    workoutType = workoutCycle.moveToNextDayWorkOut()
+                }
             )
-
-            Text("${workOuts.size} remaining today", color = Color.Gray)
-
-            Spacer(modifier = Modifier.size(20.dp))
-
-            if (workOuts.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No workOuts created.")
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
-                ) {
-                    items(items = workOuts, key = { it.id }) { workOut ->
-                        WorkoutCard(workout = workOut, onEditClick = {
-                            workOutToEdit = workOut
-                            showEditorDialog = true
-                        }, onDeleteClick = {
-                            viewModel.delete(workOut)
-                        })
-                    }
-                }
-            }
+        } else if (pageIndex == 1){
+            AllWorkoutListing(innerPadding, workOuts, viewModel)
+        } else {
+            ProfileScreen(innerPadding)
         }
-    }
-
-    if (showEditorDialog) {
-        WorkoutEditor(
-            workout = workOutToEdit,
-            onSave = { workout ->
-                if (workOutToEdit == null) {
+        if (showEditorDialog) {
+            WorkoutEditor(
+                workout = null,
+                onSave = { workout ->
                     viewModel.insert(workout)
-                } else {
-                    viewModel.update(workout)
+                    showEditorDialog = false
+                },
+                onCancel = {
+                    showEditorDialog = false
                 }
-                showEditorDialog = false
-            },
-            onCancel = {
-                showEditorDialog = false
-            }
-        )
+            )
+        }
     }
 }
 
@@ -233,7 +241,7 @@ fun WorkoutEditor(
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                         .fillMaxWidth(),
                     label = {
                         Text("Workout Type")
@@ -262,6 +270,27 @@ fun WorkoutEditor(
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
+            if (!currentWorkout.workOutImage.isBlank()) {
+                if (currentWorkout.workOutImage.contains("/")) {
+                    AsyncImage(
+                        model = currentWorkout.workOutImage,
+                        contentDescription = currentWorkout.workOutName,
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    val resId = WorkoutResources.drawableMap[currentWorkout.workOutImage]
+                        ?: R.drawable.placeholder
+                    Image(
+                        painter = painterResource(resId),
+                        contentDescription = "Workout Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(90.dp)
+                    )
+                }
+            }
             Button(
                 onClick = {
                     imagePickerLauncher.launch("image/*")
