@@ -14,15 +14,3 @@ class TaskViewModelFactory(private val application: Application): ViewModelProvi
         }
     }
 }
-
-
-class WorkoutViewModelFactory(private val application: Application): ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if(modelClass.isAssignableFrom(WorkOutViewModel:: class.java)){
-            @Suppress("UNCHECKED_CAST")
-            return WorkOutViewModel(application) as T
-        } else {
-            throw IllegalArgumentException("unknown view model")
-        }
-    }
-}

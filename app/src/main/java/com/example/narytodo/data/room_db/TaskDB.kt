@@ -47,33 +47,6 @@ abstract class WorkoutDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkOutsDao
 
-    companion object {
-
-        @Volatile
-        private var INSTANCE: WorkoutDatabase? = null
-
-        fun getDatabase(context: Context): WorkoutDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    WorkoutDatabase::class.java,
-                    "workout_database"
-                ).addCallback(object: RoomDatabase.Callback(){
-                    override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            INSTANCE?.let {
-                                prePopulate(it)
-                            }
-                        }
-
-                    }
-                }).build()
-                INSTANCE = instance
-                instance
-            }
-        }
-
         private suspend fun prePopulate(database: WorkoutDatabase) {
             val dao = database.workoutDao()
 
@@ -113,5 +86,4 @@ abstract class WorkoutDatabase : RoomDatabase() {
             )
             dao.insertAllWorkouts(workouts)
         }
-    }
 }

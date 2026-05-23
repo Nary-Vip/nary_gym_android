@@ -2,20 +2,22 @@ package com.example.narytodo.viewModel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.data.room_db.WorkoutDatabase
 import com.example.narytodo.repository.WorkOutRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class WorkOutViewModel(application: Application): AndroidViewModel(application) {
-    private val dao = WorkoutDatabase.getDatabase(application).workoutDao()
-
-    private val repository = WorkOutRepository(dao)
+@HiltViewModel
+class WorkOutViewModel @Inject constructor(private val repository: WorkOutRepository):
+    ViewModel() {
 
     val allWorkouts : StateFlow<List<WorkOuts>> = repository.getAllWorkouts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 

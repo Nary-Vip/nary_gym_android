@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
@@ -57,9 +58,10 @@ import com.example.narytodo.utils.WorkoutCycle
 import com.example.narytodo.utils.WorkoutResources
 import com.example.narytodo.utils.copyImageToInternalStorage
 import com.example.narytodo.viewModel.WorkOutViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 @Composable
-fun AllWorkOutListing(viewModel: WorkOutViewModel) {
+fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel()) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
 

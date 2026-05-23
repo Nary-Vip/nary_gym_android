@@ -5,8 +5,9 @@ import com.example.narytodo.data.room_db.TaskItem
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.data.room_db.WorkOutsDao
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class WorkOutRepository(private val dao: WorkOutsDao) {
+class WorkOutRepository @Inject constructor (private val dao: WorkOutsDao) {
     fun getAllWorkouts(): Flow<List<WorkOuts>> {
         return dao.getAllWorkouts()
     }
