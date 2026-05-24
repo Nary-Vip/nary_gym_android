@@ -4,6 +4,7 @@ import com.example.narytodo.data.remote.dto.AuthResponse
 import com.example.narytodo.data.remote.dto.LoginRequest
 import com.example.narytodo.data.remote.dto.LogoutRequest
 import com.example.narytodo.data.remote.dto.MessageResponse
+import com.example.narytodo.data.remote.dto.UpdateProfileResponse
 import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.data.remote.dto.WorkoutResponse
 import com.example.narytodo.data.remote.dto.WorkoutsResponse
@@ -43,7 +44,7 @@ interface ApiService {
         @Part image: MultipartBody.Part?,
         @Part("name") name: RequestBody?,
         @Part("phone") phone: RequestBody?
-    ): UserResponse
+    ): UpdateProfileResponse
 
 
     @GET("workouts")

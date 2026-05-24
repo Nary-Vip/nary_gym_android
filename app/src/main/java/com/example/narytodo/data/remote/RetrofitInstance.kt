@@ -1,6 +1,7 @@
 package com.example.narytodo.di
 
 import com.example.narytodo.data.remote.ApiService
+import com.example.narytodo.data.remote.interceptors.AuthInterceptor
 
 import dagger.Module
 import dagger.Provides
@@ -20,7 +21,7 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val BASE_URL =
-        "http://10.0.2.2:5000/api/"
+        "http://10.0.2.2:3888/api/"
 
     @Provides
     @Singleton
@@ -37,12 +38,13 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        loggingInterceptor:
-        HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        authInterceptor: AuthInterceptor
     ): OkHttpClient {
 
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
             .build()
     }
 

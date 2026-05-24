@@ -52,7 +52,7 @@ class AuthRepository @Inject constructor(
             image = imagePart,
             name = name?.toRequestBody("text/plain".toMediaTypeOrNull()),
             phone = phone?.toRequestBody("text/plain".toMediaTypeOrNull())
-        )
+        ).user
     }
 
     suspend fun logout (): MessageResponse{

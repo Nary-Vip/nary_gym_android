@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.ui.common_widgets.ProfileField
 import com.example.narytodo.ui.theme.Accent
@@ -84,16 +86,14 @@ fun ProfileScreen(
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var genderExpanded by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Initialize fields from user data when it arrives
     LaunchedEffect(user) {
         user?.let {
-            name = it.name
-            phone = it.phone
-            email = it.email
+            name = it.name ?: ""
+            phone = it.phone ?: ""
+            email = it.email ?: ""
         }
     }
 
@@ -213,7 +213,9 @@ fun ProfileScreen(
                             AsyncImage(
                                 model = user?.profile,
                                 contentDescription = "Profile photo",
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
@@ -245,7 +247,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = name.ifBlank { "Your Name" },
+                    text = name.orEmpty().ifBlank { "Your Name" },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
