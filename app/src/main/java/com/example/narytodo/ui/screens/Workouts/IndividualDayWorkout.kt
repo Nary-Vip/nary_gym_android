@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.narytodo.core.WorkOutType
+import com.example.narytodo.ui.screens.WorkoutCard
 import com.example.narytodo.ui.theme.grey
 import com.example.narytodo.viewModel.WorkOutViewModel
 

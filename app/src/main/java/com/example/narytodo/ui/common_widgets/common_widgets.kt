@@ -47,6 +47,7 @@ fun ProfileField(
     keyboardType: KeyboardType,
     error: String? = null,
     readOnly: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -58,7 +59,7 @@ fun ProfileField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = (modifier ?: Modifier).fillMaxWidth(),
             readOnly= readOnly,
             placeholder = {
                 Text(placeholder, color = Color(0xFFCCCCD6), fontSize = 14.sp)

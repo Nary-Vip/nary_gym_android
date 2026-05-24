@@ -2,6 +2,9 @@ package com.example.narytodo.viewModel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.narytodo.core.WorkOutType
@@ -19,6 +22,9 @@ import javax.inject.Inject
 class WorkOutViewModel @Inject constructor(private val repository: WorkOutRepository):
     ViewModel() {
 
+    var isLoading by mutableStateOf(false)
+        private set
+
     val allWorkouts : StateFlow<List<WorkOuts>> = repository.getAllWorkouts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 
     fun getWorkOutByType(type: WorkOutType): StateFlow<List<WorkOuts>>{
@@ -27,7 +33,9 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
 
     fun fetchWorkouts() {
         viewModelScope.launch {
+            isLoading = true
             repository.syncWorkouts()
+            isLoading = false
         }
     }
 

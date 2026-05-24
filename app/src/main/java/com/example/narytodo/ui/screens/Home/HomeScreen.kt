@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AllInbox
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SportsGymnastics
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -46,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -55,6 +57,7 @@ import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.navigation.NavRoutes
+import com.example.narytodo.ui.common_widgets.ProfileField
 import com.example.narytodo.ui.screens.Workouts.AllWorkoutListing
 import com.example.narytodo.ui.screens.Workouts.IndividualDayWorkout
 import com.example.narytodo.ui.screens.Profile.ProfileScreen
@@ -92,25 +95,24 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
                     IconButton(onClick = {
                         pageIndex = 0
                     }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today")
+                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today", modifier = Modifier.size(20.dp))
                     }
 
                     IconButton(onClick = {
                         pageIndex = 1
                     }) {
-                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today")
+                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today", modifier = Modifier.size(20.dp))
                     }
                     IconButton(onClick = {
                         pageIndex = 2
                     }) {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today")
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today", modifier = Modifier.size(20.dp))
                     }
-
                 }
             }
         },
         floatingActionButton = {
-            if (pageIndex == 1) {
+            if (pageIndex == 0) {
                 ExtendedFloatingActionButton(
                     onClick = {
                         showEditorDialog = true
@@ -127,18 +129,17 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
     ) { innerPadding ->
         when (pageIndex) {
             0 -> {
+                AllWorkoutListing(innerPadding, workOuts, viewModel)
+            }
+            1 -> {
                 IndividualDayWorkout(
                     workOutType = workoutType,
                     viewModel = viewModel,
                     innerPadding = innerPadding,
-
                     onComplete = {
                         workoutType = workoutCycle.moveToNextDayWorkOut()
                     }
                 )
-            }
-            1 -> {
-                AllWorkoutListing(innerPadding, workOuts, viewModel)
             }
             else -> {
                 ProfileScreen(innerPadding, onLogout = {
@@ -218,38 +219,51 @@ fun WorkoutEditor(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.size(20.dp))
-            OutlinedTextField(
+            ProfileField(
+                label = "Task Name",
                 value = currentWorkout?.workOutName ?: "",
+                readOnly = true,
                 onValueChange = {
                     currentWorkout = currentWorkout?.copy(
                         workOutName = it
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text("Workout Name")
-                }
+                icon = Icons.Default.SportsGymnastics,
+                placeholder = "Chest Press",
+                keyboardType = KeyboardType.Text
             )
-
-            Spacer(modifier = Modifier.size(16.dp))
-
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = {
                     expanded = !expanded
                 }
             ) {
-                OutlinedTextField(
+//                OutlinedTextField(
+//                    value = currentWorkout?.workOutType?.title ?: "",
+//                    onValueChange = {},
+//                    readOnly = true,
+//                    modifier = Modifier
+//                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+//                        .fillMaxWidth(),
+//                    label = {
+//                        Text("Workout Type")
+//                    }
+//                )
+
+                ProfileField(
+                    label = "Task Name",
                     value = currentWorkout?.workOutType?.title ?: "",
-                    onValueChange = {},
                     readOnly = true,
+                    onValueChange = {},
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                         .fillMaxWidth(),
-                    label = {
-                        Text("Workout Type")
-                    }
+                    icon = Icons.Default.SportsGymnastics,
+                    placeholder = "Shoulder",
+                    keyboardType = KeyboardType.Text
                 )
+
+
 
                 ExposedDropdownMenu(
                     expanded = expanded,
