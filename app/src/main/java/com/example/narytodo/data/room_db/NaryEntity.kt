@@ -16,12 +16,12 @@ data class TaskItem(
 
 @Entity(tableName = "workouts")
 data class WorkOuts(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String,
     val workOutName: String,
     val workOutType: WorkOutType,
     val workOutImage: String,
-    val dayId: Int)
+)
 
 
 @Entity(tableName = "workoutdays")

@@ -1,4 +1,4 @@
-package com.example.narytodo.ui.screens
+package com.example.narytodo.ui.screens.Workouts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

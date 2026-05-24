@@ -25,6 +25,12 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
         return repository.getWorkoutsByType(type).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
     }
 
+    fun fetchWorkouts() {
+        viewModelScope.launch {
+            repository.syncWorkouts()
+        }
+    }
+
     fun insert(workOuts: WorkOuts){
         viewModelScope.launch {
             repository.insert(workOuts)

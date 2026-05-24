@@ -29,6 +29,9 @@ interface WorkOutsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(workout: WorkOuts)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllWorkouts(workouts: List<WorkOuts>)
+
     @Update
     suspend fun update(workOuts: WorkOuts)
 
@@ -43,7 +46,4 @@ interface WorkOutsDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAllDays(days: List<WorkOutsDay>)
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertAllWorkouts(workouts: List<WorkOuts>)
 }

@@ -1,14 +1,10 @@
 package com.example.narytodo.ui.viewmodel
 
-import android.app.Application
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository

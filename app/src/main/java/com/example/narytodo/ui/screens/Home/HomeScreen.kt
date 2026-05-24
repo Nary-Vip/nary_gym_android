@@ -1,4 +1,4 @@
-package com.example.narytodo.ui.screens
+package com.example.narytodo.ui.screens.Home
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -55,12 +55,15 @@ import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.navigation.NavRoutes
+import com.example.narytodo.ui.screens.Workouts.AllWorkoutListing
+import com.example.narytodo.ui.screens.Workouts.IndividualDayWorkout
+import com.example.narytodo.ui.screens.Profile.ProfileScreen
 import com.example.narytodo.ui.theme.grey
 import com.example.narytodo.utils.WorkoutCycle
 import com.example.narytodo.utils.WorkoutResources
 import com.example.narytodo.utils.copyImageToInternalStorage
 import com.example.narytodo.viewModel.WorkOutViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlin.collections.get
 
 @Composable
 fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
@@ -68,14 +71,7 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
     val context = LocalContext.current
 
     var currentWorkout by remember {
-        mutableStateOf(
-            WorkOuts(
-                workOutName = "",
-                workOutType = WorkOutType.CHEST,
-                workOutImage = "",
-                dayId = 0
-            )
-        )
+        mutableStateOf<WorkOuts?>(null)
     }
 
     var pageIndex by remember { mutableIntStateOf(0) }
@@ -129,28 +125,34 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
             }
         }
     ) { innerPadding ->
-        if (pageIndex == 0) {
-            IndividualDayWorkout(
-                workOutType = workoutType,
-                viewModel = viewModel,
-                innerPadding = innerPadding,
+        when (pageIndex) {
+            0 -> {
+                IndividualDayWorkout(
+                    workOutType = workoutType,
+                    viewModel = viewModel,
+                    innerPadding = innerPadding,
 
-                onComplete = {
-                    workoutType = workoutCycle.moveToNextDayWorkOut()
-                }
-            )
-        } else if (pageIndex == 1){
-            AllWorkoutListing(innerPadding, workOuts, viewModel)
-        } else {
-            ProfileScreen(innerPadding, onLogout = {
-                navController.navigate(NavRoutes.Login.route)
-            })
+                    onComplete = {
+                        workoutType = workoutCycle.moveToNextDayWorkOut()
+                    }
+                )
+            }
+            1 -> {
+                AllWorkoutListing(innerPadding, workOuts, viewModel)
+            }
+            else -> {
+                ProfileScreen(innerPadding, onLogout = {
+                    navController.navigate(NavRoutes.Login.route)
+                })
+            }
         }
         if (showEditorDialog) {
             WorkoutEditor(
                 workout = null,
                 onSave = { workout ->
-                    viewModel.insert(workout)
+                    if (workout != null) {
+                        viewModel.insert(workout)
+                    }
                     showEditorDialog = false
                 },
                 onCancel = {
@@ -165,18 +167,13 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
 @Composable
 fun WorkoutEditor(
     workout: WorkOuts?,
-    onSave: (WorkOuts) -> Unit,
+    onSave: (WorkOuts?) -> Unit,
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
     var currentWorkout by remember {
         mutableStateOf(
-            workout ?: WorkOuts(
-                workOutName = "",
-                workOutType = WorkOutType.CHEST,
-                workOutImage = "",
-                dayId = 0
-            )
+            workout
         )
     }
 
@@ -193,7 +190,7 @@ fun WorkoutEditor(
                 uri = it
             )
 
-            currentWorkout = currentWorkout.copy(
+            currentWorkout = currentWorkout?.copy(
                 workOutImage = savedPath
             )
         }
@@ -222,9 +219,9 @@ fun WorkoutEditor(
             )
             Spacer(modifier = Modifier.size(20.dp))
             OutlinedTextField(
-                value = currentWorkout.workOutName,
+                value = currentWorkout?.workOutName ?: "",
                 onValueChange = {
-                    currentWorkout = currentWorkout.copy(
+                    currentWorkout = currentWorkout?.copy(
                         workOutName = it
                     )
                 },
@@ -243,7 +240,7 @@ fun WorkoutEditor(
                 }
             ) {
                 OutlinedTextField(
-                    value = currentWorkout.workOutType.title,
+                    value = currentWorkout?.workOutType?.title ?: "",
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier
@@ -266,7 +263,7 @@ fun WorkoutEditor(
                                 Text(type.title)
                             },
                             onClick = {
-                                currentWorkout = currentWorkout.copy(
+                                currentWorkout = currentWorkout?.copy(
                                     workOutType = type
                                 )
                                 expanded = false
@@ -276,18 +273,18 @@ fun WorkoutEditor(
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
-            if (!currentWorkout.workOutImage.isBlank()) {
-                if (currentWorkout.workOutImage.contains("/")) {
+            if (!currentWorkout?.workOutName.isNullOrBlank()) {
+                if ((currentWorkout?.workOutImage?:"" ).contains("/")) {
                     AsyncImage(
-                        model = currentWorkout.workOutImage,
-                        contentDescription = currentWorkout.workOutName,
+                        model = currentWorkout?.workOutImage,
+                        contentDescription = currentWorkout?.workOutName,
                         modifier = Modifier
                             .size(90.dp)
                             .clip(RoundedCornerShape(16.dp)),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    val resId = WorkoutResources.drawableMap[currentWorkout.workOutImage]
+                    val resId = WorkoutResources.drawableMap[currentWorkout?.workOutImage]
                         ?: R.drawable.placeholder
                     Image(
                         painter = painterResource(resId),
@@ -304,7 +301,7 @@ fun WorkoutEditor(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    if (currentWorkout.workOutImage.isBlank()) {
+                    if (currentWorkout?.workOutName.isNullOrBlank()) {
                         "Select Workout Image"
                     } else {
                         "Change Workout Image"
@@ -317,7 +314,7 @@ fun WorkoutEditor(
                     onSave(currentWorkout)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = currentWorkout.workOutName.isNotBlank()
+                enabled = !currentWorkout?.workOutName.isNullOrBlank()
             ) {
                 Text("Save Workout")
             }

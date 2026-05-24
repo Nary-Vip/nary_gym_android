@@ -1,4 +1,4 @@
-package com.example.narytodo.ui.screens
+package com.example.narytodo.ui.screens.Profile
 
 import android.net.Uri
 import android.widget.Toast
@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,11 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.ui.common_widgets.ProfileField
 import com.example.narytodo.ui.theme.Accent
 import com.example.narytodo.ui.theme.CardBg
@@ -69,7 +64,6 @@ import com.example.narytodo.ui.theme.DividerColor
 import com.example.narytodo.ui.theme.LabelColor
 import com.example.narytodo.ui.theme.Primary
 import com.example.narytodo.ui.theme.TextColor
-import com.example.narytodo.ui.viewmodel.LoginUiState
 import com.example.narytodo.viewModel.ProfileUiState
 import com.example.narytodo.viewModel.ProfileViewModel
 
@@ -102,6 +96,7 @@ fun ProfileScreen(
             is ProfileUiState.UpdateProfileSuccess -> {
                 Toast.makeText(context, uiState.message, Toast.LENGTH_SHORT).show()
                 profileViewModel.resetUiState()
+                profileImageUri = null
             }
 
             is ProfileUiState.LogoutSuccess -> {
@@ -112,6 +107,12 @@ fun ProfileScreen(
 
             is ProfileUiState.Error -> {
                 Toast.makeText(context, uiState.message, Toast.LENGTH_LONG).show()
+                user?.let {
+                    name = it.name
+                    phone = it.phone
+                    email = it.email
+                }
+                profileImageUri = null
                 profileViewModel.resetUiState()
             }
 
@@ -124,7 +125,10 @@ fun ProfileScreen(
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { profileImageUri = it }
+        uri?.let {
+            profileImageUri = it
+            profileViewModel.updateProfile(name, phone, it)
+        }
     }
 
     if (showLogoutDialog) {
@@ -306,31 +310,35 @@ fun ProfileScreen(
                 keyboardType = KeyboardType.Email
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    profileViewModel.updateProfile(name, phone, profileImageUri)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                enabled = uiState !is ProfileUiState.UpdateProfileLoading,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
-            ) {
-                if (uiState is ProfileUiState.UpdateProfileLoading)
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                else
-                    Text(
-                        text = "Save Changes",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        color = Color.White
-                    )
+            val isDataChanged = name != (user?.name ?: "") || phone != (user?.phone ?: "")
+
+            if (isDataChanged) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        profileViewModel.updateProfile(name, phone, profileImageUri)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    enabled = uiState !is ProfileUiState.UpdateProfileLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    if (uiState is ProfileUiState.UpdateProfileLoading)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    else
+                        Text(
+                            text = "Save Changes",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                }
             }
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),

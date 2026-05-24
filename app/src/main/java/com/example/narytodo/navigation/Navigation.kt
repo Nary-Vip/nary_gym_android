@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.narytodo.ui.screens.AllWorkOutListing
+import com.example.narytodo.ui.screens.Home.AllWorkOutListing
 import com.example.narytodo.ui.screens.CreateAccountScreen
 import com.example.narytodo.ui.screens.LoginScreen
 
