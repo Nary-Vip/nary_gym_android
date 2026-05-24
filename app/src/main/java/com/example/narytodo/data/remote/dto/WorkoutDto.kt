@@ -25,6 +25,6 @@ data class WorkoutResponse(
 )
 
 // DELETE response
-data class DeleteWorkoutResponse(
+data class MessageResponse(
     @SerializedName("message") val message: String
 )

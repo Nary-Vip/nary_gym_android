@@ -41,10 +41,8 @@ fun AppNavigator(navController: NavHostController) {
             )
         }
         composable(NavRoutes.Home.route) {
-            AllWorkOutListing()
+            AllWorkOutListing(navController = navController)
         }
-
-
     }
 
 }

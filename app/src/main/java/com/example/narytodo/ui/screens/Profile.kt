@@ -1,6 +1,7 @@
 package com.example.narytodo.ui.screens
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -30,12 +31,16 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,11 +51,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.ui.common_widgets.ProfileField
 import com.example.narytodo.ui.theme.Accent
 import com.example.narytodo.ui.theme.CardBg
@@ -58,11 +67,19 @@ import com.example.narytodo.ui.theme.DividerColor
 import com.example.narytodo.ui.theme.LabelColor
 import com.example.narytodo.ui.theme.Primary
 import com.example.narytodo.ui.theme.TextColor
+import com.example.narytodo.ui.viewmodel.LoginUiState
+import com.example.narytodo.viewModel.ProfileUiState
+import com.example.narytodo.viewModel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    onLogout: () -> Unit = {},
+    profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val uiState = profileViewModel.uiState
+    val user by profileViewModel.currentUser.collectAsState()
     var profileImageUri by remember { mutableStateOf<Uri?>(null) }
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -70,6 +87,37 @@ fun ProfileScreen(
     var gender by remember { mutableStateOf("") }
     var genderExpanded by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Initialize fields from user data when it arrives
+    LaunchedEffect(user) {
+        user?.let {
+            name = it.name
+            phone = it.phone
+            email = it.email
+        }
+    }
+
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is ProfileUiState.UpdateProfileSuccess -> {
+                Toast.makeText(context, uiState.message, Toast.LENGTH_SHORT).show()
+                profileViewModel.resetUiState()
+            }
+
+            is ProfileUiState.LogoutSuccess -> {
+                Toast.makeText(context, uiState.message, Toast.LENGTH_SHORT).show()
+                profileViewModel.resetUiState()
+                onLogout()
+            }
+
+            is ProfileUiState.Error -> {
+                Toast.makeText(context, uiState.message, Toast.LENGTH_LONG).show()
+                profileViewModel.resetUiState()
+            }
+
+            else -> Unit
+        }
+    }
 
     val genderOptions = listOf("Male", "Female")
 
@@ -100,7 +148,7 @@ fun ProfileScreen(
                 TextButton(
                     onClick = {
                         showLogoutDialog = false
-//                        onLogout()
+                        profileViewModel.logout()
                     }
                 ) {
                     Text("Log out", color = Accent, fontWeight = FontWeight.SemiBold)
@@ -157,6 +205,13 @@ fun ProfileScreen(
                         if (profileImageUri != null) {
                             AsyncImage(
                                 model = profileImageUri,
+                                contentDescription = "Profile photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (!user?.profile.isNullOrBlank()) {
+                            AsyncImage(
+                                model = user?.profile,
                                 contentDescription = "Profile photo",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
@@ -230,20 +285,6 @@ fun ProfileScreen(
                 placeholder = "Enter your name",
                 keyboardType = KeyboardType.Text
             )
-
-            // Gender dropdown
-//            GenderDropdown(
-//                selected = gender,
-//                expanded = genderExpanded,
-//                options = genderOptions,
-//                onToggle = { genderExpanded = !genderExpanded },
-//                onSelect = {
-//                    gender = it
-//                    genderExpanded = false
-//                },
-//                onDismiss = { genderExpanded = false }
-//            )
-
             // Phone field
             ProfileField(
                 label = "Phone Number",
@@ -256,6 +297,7 @@ fun ProfileScreen(
             ProfileField(
                 label = "Email",
                 value = email,
+                readOnly = true,
                 onValueChange = { email = it },
                 icon = Icons.Default.Email,
                 placeholder = "you@example.com",
@@ -264,19 +306,29 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = { /* handle save */ },
+                onClick = {
+                    profileViewModel.updateProfile(name, phone, profileImageUri)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
+                enabled = uiState !is ProfileUiState.UpdateProfileLoading,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
-                Text(
-                    text = "Save Changes",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
-                    color = Color.White
-                )
+                if (uiState is ProfileUiState.UpdateProfileLoading)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                else
+                    Text(
+                        text = "Save Changes",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        color = Color.White
+                    )
             }
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -287,6 +339,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
+                enabled = uiState !is ProfileUiState.LogoutLoading,
                 shape = RoundedCornerShape(14.dp),
                 border = ButtonDefaults.outlinedButtonBorder.copy(
                     brush = Brush.horizontalGradient(listOf(Accent, Accent))
@@ -295,19 +348,26 @@ fun ProfileScreen(
                     contentColor = Accent
                 )
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Log Out",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
-                )
+                if (uiState is ProfileUiState.LogoutLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Accent,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Log Out",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+                }
             }
-
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

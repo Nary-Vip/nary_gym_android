@@ -45,7 +45,8 @@ fun ProfileField(
     icon: ImageVector,
     placeholder: String,
     keyboardType: KeyboardType,
-    error: String? = null
+    error: String? = null,
+    readOnly: Boolean = false,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -58,6 +59,7 @@ fun ProfileField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
+            readOnly= readOnly,
             placeholder = {
                 Text(placeholder, color = Color(0xFFCCCCD6), fontSize = 14.sp)
             },

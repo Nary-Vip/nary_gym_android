@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.data.remote.dto.CreateAccountRequest
+import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.ui.utils.FieldValidators
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +39,9 @@ sealed class CreateAccountUiState {
 
 @HiltViewModel
 class CreateAccountViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val user: UserSession,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     var formState by mutableStateOf(CreateAccountFormState())
@@ -101,6 +105,12 @@ class CreateAccountViewModel @Inject constructor(
                     ),
                     imageUri = formState.profileImageUri
                 )
+                user.setUser(response.user)
+                tokenManager.saveTokens(
+                    accessToken = response.token.accessToken,
+                    refreshToken = response.token.refreshToken
+                )
+
                 uiState = CreateAccountUiState.Success(response.user.name)
             } catch (e: Exception) {
                 uiState = CreateAccountUiState.Error(e.message ?: "Something went wrong")

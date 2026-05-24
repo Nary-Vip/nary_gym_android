@@ -1,18 +1,19 @@
 package com.example.narytodo.data.remote
 
 import com.example.narytodo.data.remote.dto.AuthResponse
-import com.example.narytodo.data.remote.dto.CreateAccountRequest
-import com.example.narytodo.data.remote.dto.DeleteWorkoutResponse
 import com.example.narytodo.data.remote.dto.LoginRequest
+import com.example.narytodo.data.remote.dto.LogoutRequest
+import com.example.narytodo.data.remote.dto.MessageResponse
+import com.example.narytodo.data.remote.dto.UserResponse
 import com.example.narytodo.data.remote.dto.WorkoutResponse
 import com.example.narytodo.data.remote.dto.WorkoutsResponse
 import okhttp3.MultipartBody
-import okhttp3.Request
 import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -35,6 +36,14 @@ interface ApiService {
     suspend fun login(
         @Body request: LoginRequest
     ): AuthResponse
+
+    @Multipart
+    @PATCH("auth/update-account")
+    suspend fun updateProfile(
+        @Part image: MultipartBody.Part?,
+        @Part("name") name: RequestBody?,
+        @Part("phone") phone: RequestBody?
+    ): UserResponse
 
 
     @GET("workouts")
@@ -66,7 +75,11 @@ interface ApiService {
     @DELETE("workouts/{id}")
     suspend fun deleteWorkout(
         @Path("id") id: String
-    ): DeleteWorkoutResponse
+    ): MessageResponse
 
 
+    @POST("auth/logout")
+    suspend fun logout(
+        @Body request: LogoutRequest
+    ): MessageResponse
 }

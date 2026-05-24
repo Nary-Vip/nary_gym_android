@@ -3,7 +3,7 @@ package com.example.narytodo.repository.remote
 import android.content.Context
 import android.net.Uri
 import com.example.narytodo.data.remote.ApiService
-import com.example.narytodo.data.remote.dto.DeleteWorkoutResponse
+import com.example.narytodo.data.remote.dto.MessageResponse
 import com.example.narytodo.data.remote.dto.WorkoutResponse
 import com.example.narytodo.data.remote.dto.WorkoutsResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -58,7 +58,7 @@ class WorkoutRepository  @Inject constructor(
         )
     }
 
-    suspend fun deleteWorkout(id: String): DeleteWorkoutResponse {
+    suspend fun deleteWorkout(id: String): MessageResponse {
         return api.deleteWorkout(id)
     }
 

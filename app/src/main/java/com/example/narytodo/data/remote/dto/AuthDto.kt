@@ -29,3 +29,7 @@ data class UserResponse(
     val name: String,
     val profile: String
 )
+
+data class LogoutRequest(
+    val refreshToken: String,
+)

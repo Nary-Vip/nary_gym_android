@@ -8,6 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.narytodo.data.remote.dto.UserResponse
+import com.example.narytodo.data.local.TokenManager
+import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.ui.utils.FieldValidators
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +33,9 @@ sealed class LoginUiState {
 }
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val user: UserSession,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     var formState by mutableStateOf(LoginFormState())
@@ -73,9 +78,14 @@ class LoginViewModel @Inject constructor(
                     email    = formState.email,
                     password = formState.password
                 )
-                // Save tokens — next step
+                user.setUser(response.user)
+                tokenManager.saveTokens(
+                    accessToken = response.token.accessToken,
+                    refreshToken = response.token.refreshToken
+                )
                 uiState = LoginUiState.Success(response.user.name)
             } catch (e: Exception) {
+                print(e.message)
                 uiState = LoginUiState.Error(e.message ?: "Something went wrong")
             }
         }

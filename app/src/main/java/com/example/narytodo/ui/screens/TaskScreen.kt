@@ -49,10 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
+import com.example.narytodo.navigation.NavRoutes
 import com.example.narytodo.ui.theme.grey
 import com.example.narytodo.utils.WorkoutCycle
 import com.example.narytodo.utils.WorkoutResources
@@ -61,7 +63,7 @@ import com.example.narytodo.viewModel.WorkOutViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 
 @Composable
-fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel()) {
+fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
 
@@ -140,7 +142,9 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel()) {
         } else if (pageIndex == 1){
             AllWorkoutListing(innerPadding, workOuts, viewModel)
         } else {
-            ProfileScreen(innerPadding)
+            ProfileScreen(innerPadding, onLogout = {
+                navController.navigate(NavRoutes.Login.route)
+            })
         }
         if (showEditorDialog) {
             WorkoutEditor(
