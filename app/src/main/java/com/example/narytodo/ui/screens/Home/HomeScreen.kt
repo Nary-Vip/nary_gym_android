@@ -1,6 +1,7 @@
 package com.example.narytodo.ui.screens.Home
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -34,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -55,6 +57,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
+import com.example.narytodo.data.remote.dto.Workout
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.navigation.NavRoutes
 import com.example.narytodo.ui.common_widgets.ProfileField
@@ -72,6 +75,13 @@ import kotlin.collections.get
 fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(viewModel.errorMessage) {
+        viewModel.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
 
     var currentWorkout by remember {
         mutableStateOf<WorkOuts?>(null)
@@ -174,7 +184,7 @@ fun WorkoutEditor(
     val context = LocalContext.current
     var currentWorkout by remember {
         mutableStateOf(
-            workout
+            workout ?: WorkOuts(workOutName = "", workOutType = WorkOutType.CHEST, workOutImage = "", id = "")
         )
     }
 
@@ -191,7 +201,7 @@ fun WorkoutEditor(
                 uri = it
             )
 
-            currentWorkout = currentWorkout?.copy(
+            currentWorkout = currentWorkout.copy(
                 workOutImage = savedPath
             )
         }
@@ -222,9 +232,8 @@ fun WorkoutEditor(
             ProfileField(
                 label = "Task Name",
                 value = currentWorkout?.workOutName ?: "",
-                readOnly = true,
                 onValueChange = {
-                    currentWorkout = currentWorkout?.copy(
+                    currentWorkout = currentWorkout.copy(
                         workOutName = it
                     )
                 },
@@ -238,33 +247,18 @@ fun WorkoutEditor(
                     expanded = !expanded
                 }
             ) {
-//                OutlinedTextField(
-//                    value = currentWorkout?.workOutType?.title ?: "",
-//                    onValueChange = {},
-//                    readOnly = true,
-//                    modifier = Modifier
-//                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
-//                        .fillMaxWidth(),
-//                    label = {
-//                        Text("Workout Type")
-//                    }
-//                )
-
                 ProfileField(
                     label = "Task Name",
                     value = currentWorkout?.workOutType?.title ?: "",
-                    readOnly = true,
                     onValueChange = {},
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                         .fillMaxWidth(),
+                    readOnly = true,
                     icon = Icons.Default.SportsGymnastics,
                     placeholder = "Shoulder",
                     keyboardType = KeyboardType.Text
                 )
-
-
-
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = {
@@ -277,7 +271,7 @@ fun WorkoutEditor(
                                 Text(type.title)
                             },
                             onClick = {
-                                currentWorkout = currentWorkout?.copy(
+                                currentWorkout = currentWorkout.copy(
                                     workOutType = type
                                 )
                                 expanded = false

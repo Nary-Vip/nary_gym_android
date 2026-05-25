@@ -1,24 +1,35 @@
 package com.example.narytodo.data.remote.interceptors
 
 import com.example.narytodo.data.local.TokenManager
+import com.example.narytodo.data.session.UserSession
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
 
 class AuthInterceptor @Inject constructor(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val userSession: UserSession
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val accessToken = tokenManager.getAccessToken()
 
-        return if (accessToken != null) {
-            val newRequest = originalRequest.newBuilder()
+        val request = if (accessToken != null) {
+            originalRequest.newBuilder()
                 .header("Authorization", "Bearer $accessToken")
                 .build()
-            chain.proceed(newRequest)
         } else {
-            chain.proceed(originalRequest)
+            originalRequest
         }
+
+        val response = chain.proceed(request)
+
+        if (response.code == 401) {
+            // Clear session
+            userSession.clearSession()
+            tokenManager.clearTokens()
+        }
+
+        return response
     }
 }

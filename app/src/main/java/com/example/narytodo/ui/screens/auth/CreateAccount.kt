@@ -135,7 +135,6 @@ fun CreateAccountScreen(
                             .clip(CircleShape)
                             .border(2.dp, Accent, CircleShape)
                             .background(Color(0xFF2A2A4A)),
-//                            .clickable { imagePickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
                         if (viewModel.formState.profileImageUri != null) {

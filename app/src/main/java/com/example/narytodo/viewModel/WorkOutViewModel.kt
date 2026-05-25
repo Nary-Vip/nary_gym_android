@@ -1,6 +1,7 @@
 package com.example.narytodo.viewModel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,7 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.data.room_db.WorkoutDatabase
-import com.example.narytodo.repository.WorkOutRepository
+import com.example.narytodo.repository.remote.WorkOutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,9 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
     var isLoading by mutableStateOf(false)
         private set
 
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
     val allWorkouts : StateFlow<List<WorkOuts>> = repository.getAllWorkouts().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
 
     fun getWorkOutByType(type: WorkOutType): StateFlow<List<WorkOuts>>{
@@ -34,26 +38,51 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
     fun fetchWorkouts() {
         viewModelScope.launch {
             isLoading = true
-            repository.syncWorkouts()
-            isLoading = false
+            errorMessage = null
+            try {
+                repository.syncWorkouts()
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Failed to sync workouts"
+            } finally {
+                isLoading = false
+            }
         }
     }
 
     fun insert(workOuts: WorkOuts){
         viewModelScope.launch {
-            repository.insert(workOuts)
+            errorMessage = null
+            try {
+                repository.insert(workOuts)
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Failed to insert workout"
+            }
         }
     }
 
     fun delete(workOuts: WorkOuts){
         viewModelScope.launch {
-            repository.delete(workOuts)
+            errorMessage = null
+            try {
+                repository.delete(workOuts)
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Failed to delete workout"
+            }
         }
     }
 
     fun update(workOuts: WorkOuts){
         viewModelScope.launch {
-            repository.update(workOuts)
+            errorMessage = null
+            try {
+                repository.update(workOuts)
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Failed to update workout"
+            }
         }
+    }
+
+    fun clearError() {
+        errorMessage = null
     }
 }
