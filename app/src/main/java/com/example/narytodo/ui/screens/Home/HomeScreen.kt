@@ -285,18 +285,19 @@ fun WorkoutEditor(
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
-            if (!currentWorkout?.workOutName.isNullOrBlank()) {
-                if ((currentWorkout?.workOutImage?:"" ).contains("/")) {
+            if (!currentWorkout.workOutName.isBlank() || !currentWorkout.workOutImage.isBlank()) {
+                val imagePath = currentWorkout.workOutImage
+                if (imagePath.contains("/") || imagePath.startsWith("http")) {
                     AsyncImage(
-                        model = currentWorkout?.workOutImage,
-                        contentDescription = currentWorkout?.workOutName,
+                        model = imagePath,
+                        contentDescription = currentWorkout.workOutName,
                         modifier = Modifier
                             .size(90.dp)
                             .clip(RoundedCornerShape(16.dp)),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    val resId = WorkoutResources.drawableMap[currentWorkout?.workOutImage]
+                    val resId = WorkoutResources.drawableMap[imagePath]
                         ?: R.drawable.placeholder
                     Image(
                         painter = painterResource(resId),
@@ -313,7 +314,7 @@ fun WorkoutEditor(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    if (currentWorkout?.workOutName.isNullOrBlank()) {
+                    if (currentWorkout.workOutName.isBlank()) {
                         "Select Workout Image"
                     } else {
                         "Change Workout Image"
@@ -326,7 +327,7 @@ fun WorkoutEditor(
                     onSave(currentWorkout)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !currentWorkout?.workOutName.isNullOrBlank()
+                enabled = !currentWorkout.workOutName.isNullOrBlank()
             ) {
                 Text("Save Workout")
             }

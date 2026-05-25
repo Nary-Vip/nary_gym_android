@@ -101,8 +101,10 @@ class WorkOutRepository @Inject constructor(
                 capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
-    private fun uriToMultipart(filePath: String): MultipartBody.Part {
+    private fun uriToMultipart(filePath: String): MultipartBody.Part? {
         val file = File(filePath)
+        if (!file.exists()) return null
+
         val mimeType = URLConnection.guessContentTypeFromName(file.name) ?: "image/jpeg"
         val requestBody = file.asRequestBody(mimeType.toMediaTypeOrNull())
 

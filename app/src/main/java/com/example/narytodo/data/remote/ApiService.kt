@@ -62,7 +62,7 @@ interface ApiService {
     @Multipart
     @POST("workouts")
     suspend fun createWorkout(
-        @Part("workoutName") workoutName: RequestBody,
+        @Part("workOutName") workoutName: RequestBody,
         @Part("workOutType") workOutType: RequestBody,
         @Part image: MultipartBody.Part?
     ): WorkoutResponse
