@@ -26,8 +26,8 @@ class AuthInterceptor @Inject constructor(
 
         if (response.code == 401) {
             // Clear session
-            userSession.clearSession()
             tokenManager.clearTokens()
+            userSession.clearSession()
         }
 
         return response

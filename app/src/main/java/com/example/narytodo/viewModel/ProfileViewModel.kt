@@ -43,6 +43,8 @@ class ProfileViewModel @Inject constructor(
             initialValue = null
         )
 
+    fun hasToken(): Boolean = tokenManager.getAccessToken() != null
+
     fun updateProfile(name: String, phone: String, imageUri: Uri?) {
         viewModelScope.launch {
             try {

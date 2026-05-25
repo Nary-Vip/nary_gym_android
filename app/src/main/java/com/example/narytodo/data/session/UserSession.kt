@@ -21,9 +21,4 @@ class UserSession @Inject constructor() {
     fun clearSession(){
         _currentUser.value = null
     }
-
-    fun setTokens(token: TokenResponse){
-//        _currentUser.value = user
-    }
-
 }

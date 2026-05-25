@@ -20,7 +20,9 @@ fun AppNavigator(navController: NavHostController, profileViewModel: ProfileView
     val currentUser by profileViewModel.currentUser.collectAsState()
 
     LaunchedEffect(currentUser) {
-        if (currentUser == null && tokenManager.getAccessToken() == null) {
+        // Triggered whenever currentUser changes. 
+        // If it becomes null AND token is cleared (by interceptor), we MUST log out.
+        if (currentUser == null && !profileViewModel.hasToken()) {
             val currentRoute = navController.currentBackStackEntry?.destination?.route
             if (currentRoute != NavRoutes.Login.route && currentRoute != NavRoutes.CreateAccount.route) {
                 navController.navigate(NavRoutes.Login.route) {
