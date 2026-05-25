@@ -27,6 +27,10 @@ class AuthRepository @Inject constructor(
         return api.login(LoginRequest(email, password))
     }
 
+    suspend fun getUser (): AuthResponse{
+        return api.getUser()
+    }
+
     suspend fun createAccount (request: CreateAccountRequest, imageUri: Uri? ) : AuthResponse {
         val imagePart = imageUri?.let { uri ->
             val stream = context.contentResolver.openInputStream(uri)

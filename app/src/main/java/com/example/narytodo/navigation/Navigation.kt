@@ -8,6 +8,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.ui.screens.Home.AllWorkOutListing
 import com.example.narytodo.ui.screens.CreateAccountScreen
 import com.example.narytodo.ui.screens.LoginScreen
@@ -15,18 +16,21 @@ import com.example.narytodo.viewModel.ProfileViewModel
 
 
 @Composable
-fun AppNavigator(navController: NavHostController, profileViewModel: ProfileViewModel = hiltViewModel()) {
+fun AppNavigator(navController: NavHostController, profileViewModel: ProfileViewModel = hiltViewModel(), tokenManager: TokenManager) {
     val currentUser by profileViewModel.currentUser.collectAsState()
 
     LaunchedEffect(currentUser) {
-        if (currentUser == null) {
-            navController.navigate(NavRoutes.Login.route) {
-                popUpTo(0) { inclusive = true }
+        if (currentUser == null && tokenManager.getAccessToken() == null) {
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            if (currentRoute != NavRoutes.Login.route && currentRoute != NavRoutes.CreateAccount.route) {
+                navController.navigate(NavRoutes.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
             }
         }
     }
 
-    val startDestination = if (currentUser != null) {
+    val startDestination = if (tokenManager.getAccessToken() != null) {
         NavRoutes.Home.route
     } else {
         NavRoutes.Login.route

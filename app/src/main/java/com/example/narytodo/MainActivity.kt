@@ -5,12 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
+import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.navigation.AppNavigator
 import com.example.narytodo.ui.theme.NaryToDoTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             NaryToDoTheme {
                 val navController = rememberNavController()
-                AppNavigator(navController)
+                AppNavigator(navController, tokenManager =  tokenManager)
             }
         }
     }

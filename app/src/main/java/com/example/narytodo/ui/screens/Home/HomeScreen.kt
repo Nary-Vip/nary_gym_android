@@ -83,6 +83,10 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
         }
     }
 
+    LaunchedEffect(true) {
+        viewModel.getCurrentUser()
+    }
+
     var currentWorkout by remember {
         mutableStateOf<WorkOuts?>(null)
     }

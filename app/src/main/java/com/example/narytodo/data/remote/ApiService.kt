@@ -38,6 +38,9 @@ interface ApiService {
         @Body request: LoginRequest
     ): AuthResponse
 
+    @GET("auth/get-user")
+    suspend fun getUser(): AuthResponse
+
     @Multipart
     @PATCH("auth/update-account")
     suspend fun updateProfile(

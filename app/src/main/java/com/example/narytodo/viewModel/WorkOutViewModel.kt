@@ -11,6 +11,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.narytodo.core.WorkOutType
 import com.example.narytodo.data.room_db.WorkOuts
 import com.example.narytodo.data.room_db.WorkoutDatabase
+import com.example.narytodo.data.session.UserSession
+import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.repository.remote.WorkOutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class WorkOutViewModel @Inject constructor(private val repository: WorkOutRepository):
+class WorkOutViewModel @Inject constructor(private val repository: WorkOutRepository, private  val authRepository: AuthRepository, val userSession: UserSession):
     ViewModel() {
 
     var isLoading by mutableStateOf(false)
@@ -33,6 +35,18 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
 
     fun getWorkOutByType(type: WorkOutType): StateFlow<List<WorkOuts>>{
         return repository.getWorkoutsByType(type).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = emptyList())
+    }
+
+    fun getCurrentUser(){
+        viewModelScope.launch {
+            errorMessage = null
+            try {
+                val response = authRepository.getUser()
+                userSession.setUser(response.user)
+            } catch (e: Exception) {
+                errorMessage = e.message
+            }
+        }
     }
 
     fun fetchWorkouts() {
