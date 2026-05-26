@@ -21,7 +21,7 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val BASE_URL =
-        "http://10.0.2.2:3888/api/"
+        "https://nary-gym-backend.onrender.com/api/"
 
     @Provides
     @Singleton
@@ -43,6 +43,9 @@ object NetworkModule {
     ): OkHttpClient {
 
         return OkHttpClient.Builder()
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
             .build()

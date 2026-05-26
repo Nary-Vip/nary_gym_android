@@ -70,7 +70,6 @@ import com.example.narytodo.viewModel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     innerPadding: PaddingValues,
-    onLogout: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -102,7 +101,6 @@ fun ProfileScreen(
             is ProfileUiState.LogoutSuccess -> {
                 Toast.makeText(context, uiState.message, Toast.LENGTH_SHORT).show()
                 profileViewModel.resetUiState()
-                onLogout()
             }
 
             is ProfileUiState.Error -> {

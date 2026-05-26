@@ -156,9 +156,7 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
                 )
             }
             else -> {
-                ProfileScreen(innerPadding, onLogout = {
-                    navController.navigate(NavRoutes.Login.route)
-                })
+                ProfileScreen(innerPadding)
             }
         }
         if (showEditorDialog) {

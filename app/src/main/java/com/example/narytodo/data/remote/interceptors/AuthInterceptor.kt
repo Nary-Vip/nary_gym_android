@@ -28,6 +28,10 @@ class AuthInterceptor @Inject constructor(
             // Clear session
             tokenManager.clearTokens()
             userSession.clearSession()
+            
+            kotlinx.coroutines.runBlocking {
+                userSession.emitUnauthorized()
+            }
         }
 
         return response

@@ -43,6 +43,8 @@ class ProfileViewModel @Inject constructor(
             initialValue = null
         )
 
+    val unauthorizedEvent = userSession.unauthorizedEvent
+
     fun hasToken(): Boolean = tokenManager.getAccessToken() != null
 
     fun updateProfile(name: String, phone: String, imageUri: Uri?) {
@@ -74,6 +76,7 @@ class ProfileViewModel @Inject constructor(
                 userSession.clearSession()
                 tokenManager.clearTokens()
                 uiState = ProfileUiState.LogoutSuccess(message = "Logged out successfully")
+                userSession.emitUnauthorized()
             } catch (e: Exception) {
                 uiState = ProfileUiState.Error(message = e.message ?: "Something went wrong")
             }

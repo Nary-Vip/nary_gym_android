@@ -17,12 +17,8 @@ import com.example.narytodo.viewModel.ProfileViewModel
 
 @Composable
 fun AppNavigator(navController: NavHostController, profileViewModel: ProfileViewModel = hiltViewModel(), tokenManager: TokenManager) {
-    val currentUser by profileViewModel.currentUser.collectAsState()
-
-    LaunchedEffect(currentUser) {
-        // Triggered whenever currentUser changes. 
-        // If it becomes null AND token is cleared (by interceptor), we MUST log out.
-        if (currentUser == null && !profileViewModel.hasToken()) {
+    LaunchedEffect(Unit) {
+        profileViewModel.unauthorizedEvent.collect {
             val currentRoute = navController.currentBackStackEntry?.destination?.route
             if (currentRoute != NavRoutes.Login.route && currentRoute != NavRoutes.CreateAccount.route) {
                 navController.navigate(NavRoutes.Login.route) {
