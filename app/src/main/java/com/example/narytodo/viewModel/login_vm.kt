@@ -9,6 +9,7 @@ import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.ui.utils.FieldValidators
+import com.example.narytodo.utils.getErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -81,8 +82,7 @@ class LoginViewModel @Inject constructor(
                 )
                 uiState = LoginUiState.Success(response.user.name)
             } catch (e: Exception) {
-                print(e.message)
-                uiState = LoginUiState.Error(e.message ?: "Something went wrong")
+                uiState = LoginUiState.Error(e.getErrorMessage())
             }
         }
     }

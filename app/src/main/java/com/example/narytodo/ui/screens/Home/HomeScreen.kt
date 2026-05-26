@@ -5,11 +5,13 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,7 +33,6 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,19 +58,16 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.narytodo.R
 import com.example.narytodo.core.WorkOutType
-import com.example.narytodo.data.remote.dto.Workout
 import com.example.narytodo.data.room_db.WorkOuts
-import com.example.narytodo.navigation.NavRoutes
 import com.example.narytodo.ui.common_widgets.ProfileField
+import com.example.narytodo.ui.screens.Profile.ProfileScreen
 import com.example.narytodo.ui.screens.Workouts.AllWorkoutListing
 import com.example.narytodo.ui.screens.Workouts.IndividualDayWorkout
-import com.example.narytodo.ui.screens.Profile.ProfileScreen
 import com.example.narytodo.ui.theme.grey
 import com.example.narytodo.utils.WorkoutCycle
 import com.example.narytodo.utils.WorkoutResources
 import com.example.narytodo.utils.copyImageToInternalStorage
 import com.example.narytodo.viewModel.WorkOutViewModel
-import kotlin.collections.get
 
 @Composable
 fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
@@ -99,28 +97,33 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
 
     Scaffold(
         bottomBar = {
-            BottomAppBar() {
+            BottomAppBar(
+                modifier = Modifier.height(100.dp),
+                containerColor = Color.Black,
+                contentColor = Color.White
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 30.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     IconButton(onClick = {
                         pageIndex = 0
                     }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today", modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
                     }
 
                     IconButton(onClick = {
                         pageIndex = 1
                     }) {
-                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today", modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
                     }
                     IconButton(onClick = {
                         pageIndex = 2
                     }) {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today", modifier = Modifier.size(20.dp))
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
                     }
                 }
             }
@@ -233,7 +236,7 @@ fun WorkoutEditor(
             Spacer(modifier = Modifier.size(20.dp))
             ProfileField(
                 label = "Task Name",
-                value = currentWorkout?.workOutName ?: "",
+                value = currentWorkout.workOutName ?: "",
                 onValueChange = {
                     currentWorkout = currentWorkout.copy(
                         workOutName = it

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.narytodo.data.local.TokenManager
 import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
+import com.example.narytodo.utils.getErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -63,7 +64,7 @@ class ProfileViewModel @Inject constructor(
                 userSession.setUser(updatedUser)
                 uiState = ProfileUiState.UpdateProfileSuccess(message = "Profile Updated Successfully")
             } catch (e: Exception) {
-                uiState = ProfileUiState.Error(message = e.message ?: "Something Went Wrong")
+                uiState = ProfileUiState.Error(message = e.getErrorMessage())
             }
         }
     }
@@ -78,7 +79,7 @@ class ProfileViewModel @Inject constructor(
                 uiState = ProfileUiState.LogoutSuccess(message = "Logged out successfully")
                 userSession.emitUnauthorized()
             } catch (e: Exception) {
-                uiState = ProfileUiState.Error(message = e.message ?: "Something went wrong")
+                uiState = ProfileUiState.Error(message = e.getErrorMessage())
             }
         }
     }

@@ -11,6 +11,7 @@ import com.example.narytodo.data.remote.dto.CreateAccountRequest
 import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.ui.utils.FieldValidators
+import com.example.narytodo.utils.getErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -113,7 +114,7 @@ class CreateAccountViewModel @Inject constructor(
 
                 uiState = CreateAccountUiState.Success(response.user.name)
             } catch (e: Exception) {
-                uiState = CreateAccountUiState.Error(e.message ?: "Something went wrong")
+                uiState = CreateAccountUiState.Error(e.getErrorMessage())
             }
         }
     }

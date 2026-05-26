@@ -14,6 +14,7 @@ import com.example.narytodo.data.room_db.WorkoutDatabase
 import com.example.narytodo.data.session.UserSession
 import com.example.narytodo.repository.remote.AuthRepository
 import com.example.narytodo.repository.remote.WorkOutRepository
+import com.example.narytodo.utils.getErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
                 val response = authRepository.getUser()
                 userSession.setUser(response.user)
             } catch (e: Exception) {
-                errorMessage = e.message
+                errorMessage = e.getErrorMessage()
             }
         }
     }
@@ -56,7 +57,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
             try {
                 repository.syncWorkouts()
             } catch (e: Exception) {
-                errorMessage = e.message ?: "Failed to sync workouts"
+                errorMessage = e.getErrorMessage()
             } finally {
                 isLoading = false
             }
@@ -69,7 +70,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
             try {
                 repository.insert(workOuts)
             } catch (e: Exception) {
-                errorMessage = e.message ?: "Failed to insert workout"
+                errorMessage = e.getErrorMessage()
             }
         }
     }
@@ -80,7 +81,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
             try {
                 repository.delete(workOuts)
             } catch (e: Exception) {
-                errorMessage = e.message ?: "Failed to delete workout"
+                errorMessage = e.getErrorMessage()
             }
         }
     }
@@ -91,7 +92,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
             try {
                 repository.update(workOuts)
             } catch (e: Exception) {
-                errorMessage = e.message ?: "Failed to update workout"
+                errorMessage = e.getErrorMessage()
             }
         }
     }
