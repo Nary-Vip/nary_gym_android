@@ -1,7 +1,9 @@
 package com.nary.gym
 
 import android.app.Application
+import com.nary.gym.Notifications.AlarmScheduler
 import com.nary.gym.Notifications.NotificationHelper
+import com.nary.gym.data.local.TokenManager
 import com.nary.gym.data.session.UserSession
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -17,15 +19,23 @@ class NaryApplication : Application() {
     @Inject
     lateinit var userSession: UserSession
 
+    @Inject
+    lateinit var tokenManager: TokenManager
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
-
+        
         applicationScope.launch {
             userSession.currentUser.collectLatest { user ->
                 if (user == null) {
                     NotificationHelper.cancelNotification(this@NaryApplication)
+                    AlarmScheduler.cancelDailyAlarm(this@NaryApplication)
+                } else {
+                    if (tokenManager.getNotificationPreference()) {
+                        AlarmScheduler.scheduleDailyAlarm(this@NaryApplication)
+                    }
                 }
             }
         }

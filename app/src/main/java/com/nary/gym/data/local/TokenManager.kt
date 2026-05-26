@@ -43,6 +43,9 @@ class TokenManager @Inject constructor(@ApplicationContext context: Context) {
     fun getNotificationPreference(): Boolean = prefs.getBoolean("notifications_enabled", false)
 
     fun clearTokens() {
-        prefs.edit { clear() }
+        prefs.edit {
+            remove("access_token")
+            remove("refresh_token")
+        }
     }
 }
