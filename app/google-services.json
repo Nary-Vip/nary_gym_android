@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "482653953776",
+    "project_id": "narygym",
+    "storage_bucket": "narygym.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:482653953776:android:51970c1a5b69f317976c35",
+        "android_client_info": {
+          "package_name": "com.nary.gym"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVf7PyC6YqQ5F6aBeEfh1KYXynRZGjK5g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
