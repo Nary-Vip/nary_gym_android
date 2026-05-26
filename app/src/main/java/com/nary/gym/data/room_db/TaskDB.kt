@@ -32,7 +32,7 @@ abstract class TaskDataBase: RoomDatabase() {
         WorkOuts::class,
         WorkOutsDay::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

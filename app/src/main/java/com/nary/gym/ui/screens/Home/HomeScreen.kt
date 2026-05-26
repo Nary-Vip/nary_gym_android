@@ -4,7 +4,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,7 +34,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,17 +46,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.util.Consumer
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
-import com.nary.gym.MainActivity
-import com.nary.gym.R
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.common_widgets.ProfileField
@@ -67,37 +61,26 @@ import com.nary.gym.ui.screens.Workouts.AllWorkoutListing
 import com.nary.gym.ui.screens.Workouts.IndividualDayWorkout
 import com.nary.gym.ui.theme.grey
 import com.nary.gym.utils.WorkoutCycle
-import com.nary.gym.utils.WorkoutResources
 import com.nary.gym.utils.copyImageToInternalStorage
 import com.nary.gym.viewModel.WorkOutViewModel
 
 @Composable
-fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
+fun AllWorkOutListing(
+    viewModel: WorkOutViewModel = hiltViewModel(),
+    navController: NavHostController
+) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
-    val activity = context as? MainActivity
+    val activity = context as? android.app.Activity
 
     var pageIndex by remember { mutableIntStateOf(0) }
 
-    DisposableEffect(activity) {
-        val onNewIntentConsumer = Consumer<android.content.Intent> { intent ->
-            if (intent.getStringExtra("source") == "notification_yes") {
-                pageIndex = 1
-                intent.removeExtra("source")
-            }
-        }
-        
-        // Handle initial intent
-        activity?.intent?.let { intent ->
-            if (intent.getStringExtra("source") == "notification_yes") {
-                pageIndex = 1
-                intent.removeExtra("source")
-            }
-        }
-
-        activity?.addOnNewIntentListener(onNewIntentConsumer)
-        onDispose {
-            activity?.removeOnNewIntentListener(onNewIntentConsumer)
+    LaunchedEffect(activity?.intent) {
+        val source = activity?.intent?.getStringExtra("source")
+        if (source == "notification_yes") {
+            pageIndex = 1
+            // Clear the extra so it doesn't trigger again on recomposition if intent is re-read
+            activity.intent.removeExtra("source")
         }
     }
 
@@ -138,18 +121,33 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
                     IconButton(onClick = {
                         pageIndex = 0
                     }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = "Today",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
                     }
 
                     IconButton(onClick = {
                         pageIndex = 1
                     }) {
-                        Icon(imageVector = Icons.Default.AllInbox, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.AllInbox,
+                            contentDescription = "Today",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
                     }
                     IconButton(onClick = {
                         pageIndex = 2
                     }) {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = "Today", modifier = Modifier.size(24.dp), tint = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Today",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
                     }
                 }
             }
@@ -174,6 +172,7 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
             0 -> {
                 AllWorkoutListing(innerPadding, workOuts, viewModel)
             }
+
             1 -> {
                 IndividualDayWorkout(
                     workOutType = workoutType,
@@ -184,6 +183,7 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
                     }
                 )
             }
+
             else -> {
                 ProfileScreen(innerPadding)
             }
@@ -215,7 +215,12 @@ fun WorkoutEditor(
     val context = LocalContext.current
     var currentWorkout by remember {
         mutableStateOf(
-            workout ?: WorkOuts(workOutName = "", workOutType = WorkOutType.CHEST, workOutImage = "", id = "")
+            workout ?: WorkOuts(
+                workOutName = "",
+                workOutType = WorkOutType.CHEST,
+                workOutImage = "",
+                id = ""
+            )
         )
     }
 
@@ -314,25 +319,14 @@ fun WorkoutEditor(
             Spacer(modifier = Modifier.size(16.dp))
             if (!currentWorkout.workOutName.isBlank() || !currentWorkout.workOutImage.isBlank()) {
                 val imagePath = currentWorkout.workOutImage
-                if (imagePath.contains("/") || imagePath.startsWith("http")) {
-                    AsyncImage(
-                        model = imagePath,
-                        contentDescription = currentWorkout.workOutName,
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    val resId = WorkoutResources.drawableMap[imagePath]
-                        ?: R.drawable.placeholder
-                    Image(
-                        painter = painterResource(resId),
-                        contentDescription = "Workout Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(90.dp)
-                    )
-                }
+                AsyncImage(
+                    model = imagePath,
+                    contentDescription = currentWorkout.workOutName,
+                    modifier = Modifier
+                        .size(90.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop
+                )
             }
             Button(
                 onClick = {
@@ -354,7 +348,7 @@ fun WorkoutEditor(
                     onSave(currentWorkout)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !currentWorkout.workOutName.isNullOrBlank()
+                enabled = !currentWorkout.workOutName.isBlank()
             ) {
                 Text("Save Workout")
             }

@@ -37,7 +37,7 @@ object RoomModule {
             WorkoutDatabase::class.java,
             "workout_database"
         )
-            .fallbackToDestructiveMigration(false)
+            .fallbackToDestructiveMigration(true)
             .addCallback(
                 object : RoomDatabase.Callback() {
 

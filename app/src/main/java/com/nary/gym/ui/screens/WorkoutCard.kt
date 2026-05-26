@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.theme.grey
-import com.nary.gym.utils.WorkoutResources
 import com.nary.gym.R
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -77,25 +76,15 @@ fun WorkoutCard(
                         .shimmerEffect()
                 )
             } else {
-                if (workout.workOutImage.contains("/")) {
-                    AsyncImage(
-                        model = workout.workOutImage,
-                        contentDescription = workout.workOutName,
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    val resId = WorkoutResources.drawableMap[workout.workOutImage]
-                        ?: R.drawable.placeholder
-                    Image(
-                        painter = painterResource(resId),
-                        contentDescription = "Workout Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(90.dp)
-                    )
-                }
+                AsyncImage(
+                    model = workout.workOutImage,
+                    contentDescription = workout.workOutName,
+                    modifier = Modifier
+                        .size(90.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop
+                )
+
             }
 
             Spacer(modifier = Modifier.width(16.dp))
