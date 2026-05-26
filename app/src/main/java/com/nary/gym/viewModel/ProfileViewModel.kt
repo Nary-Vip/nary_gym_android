@@ -36,6 +36,9 @@ class ProfileViewModel @Inject constructor(
     var uiState by mutableStateOf<ProfileUiState>(ProfileUiState.Idle)
         private set
 
+    var notificationsEnabled by mutableStateOf(tokenManager.getNotificationPreference())
+        private set
+
     // Observe the current user from the shared session
     val currentUser = userSession.currentUser
         .stateIn(
@@ -45,6 +48,11 @@ class ProfileViewModel @Inject constructor(
         )
 
     val unauthorizedEvent = userSession.unauthorizedEvent
+
+    fun toggleNotifications(enabled: Boolean) {
+        notificationsEnabled = enabled
+        tokenManager.saveNotificationPreference(enabled)
+    }
 
     fun hasToken(): Boolean = tokenManager.getAccessToken() != null
 

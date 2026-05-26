@@ -35,6 +35,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,9 +53,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.util.Consumer
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import com.nary.gym.MainActivity
 import com.nary.gym.R
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
@@ -72,6 +75,31 @@ import com.nary.gym.viewModel.WorkOutViewModel
 fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navController: NavHostController) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
+    val activity = context as? MainActivity
+
+    var pageIndex by remember { mutableIntStateOf(0) }
+
+    DisposableEffect(activity) {
+        val onNewIntentConsumer = Consumer<android.content.Intent> { intent ->
+            if (intent.getStringExtra("source") == "notification_yes") {
+                pageIndex = 1
+                intent.removeExtra("source")
+            }
+        }
+        
+        // Handle initial intent
+        activity?.intent?.let { intent ->
+            if (intent.getStringExtra("source") == "notification_yes") {
+                pageIndex = 1
+                intent.removeExtra("source")
+            }
+        }
+
+        activity?.addOnNewIntentListener(onNewIntentConsumer)
+        onDispose {
+            activity?.removeOnNewIntentListener(onNewIntentConsumer)
+        }
+    }
 
     LaunchedEffect(viewModel.errorMessage) {
         viewModel.errorMessage?.let {
@@ -88,7 +116,6 @@ fun AllWorkOutListing (viewModel: WorkOutViewModel = hiltViewModel(), navControl
         mutableStateOf<WorkOuts?>(null)
     }
 
-    var pageIndex by remember { mutableIntStateOf(0) }
     var showEditorDialog by remember { mutableStateOf(false) }
 
     val workoutCycle = WorkoutCycle(context)

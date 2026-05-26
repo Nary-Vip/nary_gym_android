@@ -43,4 +43,14 @@ object AlarmScheduler {
 
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
+
+    fun cancelDailyAlarm(context: Context) {
+        val alarmManager = context.getSystemService(AlarmManager::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
 }

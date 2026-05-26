@@ -34,7 +34,7 @@
 
 
         <receiver
-            android:name=".notification.BootReceiver"
+            android:name=".Notifications.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
@@ -43,11 +43,11 @@
 
         <!-- Scheduled Alarm -->
         <receiver
-            android:name=".notification.AlarmReceiver"
+            android:name=".Notifications.AlarmReceiver"
             android:exported="false"/>
 
         <receiver
-            android:name=".notification.NotificationActionReceiver"
+            android:name=".Notifications.NotificationActionReceiver"
             android:exported="false"/>
 
 

@@ -9,14 +9,11 @@ class NotificationActionReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val manager = context.getSystemService(NotificationManager::class.java)
 
-        manager.cancel(NotificationHelper.NOTIFICATION_ID)
-
         when(intent.action){
             NotificationHelper.ACTION_SNOOZE -> {
+                manager.cancel(NotificationHelper.NOTIFICATION_ID)
                 AlarmScheduler.snoozeAlarm(context)
             }
         }
-
-
     }
 }
