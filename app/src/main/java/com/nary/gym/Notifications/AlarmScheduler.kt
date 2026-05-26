@@ -16,7 +16,7 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val snooze = System.currentTimeMillis() + (1* 60 * 1000)
+        val snooze = System.currentTimeMillis() + (30 * 60 * 1000)
 
         alarmManager.setAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP, snooze, pendingIntent

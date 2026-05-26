@@ -42,9 +42,10 @@ fun IndividualDayWorkout(
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("${workOutType.title} Day", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.size(10.dp))
+        Text("${workOutType.title} Day", fontSize = 26.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.size(4.dp))
-        Text("Work hard babe", fontSize = 12.sp, fontWeight = FontWeight.W300, color = grey)
+        Text("Work hard babe", fontSize = 14.sp, fontWeight = FontWeight.W300, color = grey)
         Spacer(modifier = Modifier.size(20.dp))
         Button(
             onClick = {

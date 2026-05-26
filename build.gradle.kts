@@ -2,8 +2,8 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.compose) apply false
-    id("com.google.devtools.ksp") version "2.3.4" apply false
-    id("com.google.dagger.hilt.android") version "2.57.1" apply false
-    id("com.google.gms.google-services") version "4.4.4" apply false
-    id("com.google.firebase.crashlytics") version "3.0.7" apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.gms) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }

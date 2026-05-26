@@ -34,13 +34,13 @@ object NotificationHelper {
         val manager = context.getSystemService(NotificationManager::class.java)
 
         val yesIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("source", "notification_yes")
         }
 
         val yesPendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            123,
             yesIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

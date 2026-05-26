@@ -1,5 +1,6 @@
 package com.nary.gym
 
+import android.app.NotificationManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,17 +23,25 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleNotificationIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
         enableEdgeToEdge()
+        handleNotificationIntent(intent)
         setContent {
             NaryToDoTheme {
                 val navController = rememberNavController()
                 AppNavigator(navController, tokenManager =  tokenManager)
             }
+        }
+    }
+    private fun handleNotificationIntent(intent: Intent?) {
+        if (intent?.getStringExtra("source") == "notification_yes") {
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.cancel(NotificationHelper.NOTIFICATION_ID)
         }
     }
 }

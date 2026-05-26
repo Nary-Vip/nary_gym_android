@@ -145,7 +145,6 @@ fun ProfileScreen(
         if (isGranted) {
             profileViewModel.toggleNotifications(true)
             AlarmScheduler.scheduleDailyAlarm(context)
-            NotificationHelper.showGym(context)
             Toast.makeText(context, "Daily reminders scheduled", Toast.LENGTH_SHORT).show()
         } else {
             profileViewModel.toggleNotifications(false)
