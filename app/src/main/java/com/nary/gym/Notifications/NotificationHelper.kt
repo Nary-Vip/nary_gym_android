@@ -61,4 +61,9 @@ object NotificationHelper {
 
         manager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
+
+    fun cancelNotification(context: Context) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.cancel(NOTIFICATION_ID)
+    }
 }
