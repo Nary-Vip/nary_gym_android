@@ -1,21 +1,20 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Preserve line numbers and source file names for easier debugging of release crashes
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep GSON DTOs
+-keepclassmembers class com.nary.gym.data.remote.dto.** { *; }
+-keep class com.nary.gym.data.remote.dto.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Room Entities and related classes
+-keep class com.nary.gym.data.room_db.** { *; }
+-keepclassmembers class com.nary.gym.data.room_db.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Hilt/Dagger generated classes (usually handled by rules but safe to have)
+-keep class **_HiltModules* { *; }
+
+# Keep Retrofit Service interfaces
+-keep interface com.nary.gym.data.remote.ApiService { *; }
+
+# Keep Enum types used in models
+-keepclassmembers enum com.nary.gym.core.WorkOutType { *; }

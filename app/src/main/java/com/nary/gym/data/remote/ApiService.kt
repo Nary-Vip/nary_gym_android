@@ -4,6 +4,7 @@ import com.nary.gym.data.remote.dto.AuthResponse
 import com.nary.gym.data.remote.dto.LoginRequest
 import com.nary.gym.data.remote.dto.LogoutRequest
 import com.nary.gym.data.remote.dto.MessageResponse
+import com.nary.gym.data.remote.dto.TokenResponse
 import com.nary.gym.data.remote.dto.UpdateProfileResponse
 import com.nary.gym.data.remote.dto.WorkoutResponse
 import com.nary.gym.data.remote.dto.WorkoutsResponse
@@ -85,4 +86,9 @@ interface ApiService {
     suspend fun logout(
         @Body request: LogoutRequest
     ): MessageResponse
+
+    @POST("auth/refresh-session")
+    suspend fun refreshToken(
+        @Body refreshToken: LogoutRequest
+    ): TokenResponse
 }

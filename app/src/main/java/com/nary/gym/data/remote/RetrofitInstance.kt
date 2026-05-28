@@ -2,6 +2,7 @@ package com.nary.gym.di
 
 import com.nary.gym.data.remote.ApiService
 import com.nary.gym.data.remote.interceptors.AuthInterceptor
+import com.nary.gym.data.remote.interceptors.TokenAuthenticator
 
 import dagger.Module
 import dagger.Provides
@@ -39,7 +40,8 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient {
 
         return OkHttpClient.Builder()
@@ -48,6 +50,7 @@ object NetworkModule {
             .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
             .build()
     }
 

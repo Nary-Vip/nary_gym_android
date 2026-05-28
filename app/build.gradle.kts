@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.gms) apply false
+    alias(libs.plugins.gms)
     alias(libs.plugins.firebase.crashlytics)
 }
 
