@@ -16,13 +16,30 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 import javax.inject.Singleton
+import javax.inject.Qualifier
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AuthClient
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NoAuthClient
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NoAuthRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NoAuthApi
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
     private const val BASE_URL =
-        "https://nary-gym-backend.onrender.com/api/"
+        "http://10.0.2.2:3888/api/"
 
     @Provides
     @Singleton
@@ -38,6 +55,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @AuthClient
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
@@ -56,10 +74,39 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @NoAuthClient
+    fun provideNoAuthOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideRetrofit(
-        client: OkHttpClient
+        @AuthClient client: OkHttpClient
     ): Retrofit {
 
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(
+                GsonConverterFactory.create()
+            )
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @NoAuthRetrofit
+    fun provideNoAuthRetrofit(
+        @NoAuthClient client: OkHttpClient
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
@@ -75,6 +122,17 @@ object NetworkModule {
         retrofit: Retrofit
     ): ApiService {
 
+        return retrofit.create(
+            ApiService::class.java
+        )
+    }
+
+    @Provides
+    @Singleton
+    @NoAuthApi
+    fun provideNoAuthApiService(
+        @NoAuthRetrofit retrofit: Retrofit
+    ): ApiService {
         return retrofit.create(
             ApiService::class.java
         )
