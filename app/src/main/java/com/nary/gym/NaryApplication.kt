@@ -26,15 +26,20 @@ class NaryApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        NotificationHelper.createNotificationChannel(this)
         
         applicationScope.launch {
             userSession.currentUser.collectLatest { user ->
-                if (user == null) {
+                if (user == null && tokenManager.getAccessToken() == null) {
                     NotificationHelper.cancelNotification(this@NaryApplication)
                     AlarmScheduler.cancelDailyAlarm(this@NaryApplication)
-                } else {
+                } else if (user != null || tokenManager.getAccessToken() != null) {
                     if (tokenManager.getNotificationPreference()) {
-                        AlarmScheduler.scheduleDailyAlarm(this@NaryApplication)
+                        AlarmScheduler.scheduleDailyAlarm(
+                            this@NaryApplication,
+                            tokenManager.getReminderHour(),
+                            tokenManager.getReminderMinute()
+                        )
                     }
                 }
             }

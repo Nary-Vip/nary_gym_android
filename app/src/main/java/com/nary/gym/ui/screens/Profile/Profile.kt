@@ -1,9 +1,13 @@
 package com.nary.gym.ui.screens.Profile
 
 import android.Manifest
+import android.app.AlarmManager
+import android.app.TimePickerDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -139,13 +143,47 @@ fun ProfileScreen(
         }
     }
 
+    val showTimePicker = {
+        val timePickerDialog = TimePickerDialog(
+            context,
+            { _, selectedHour, selectedMinute ->
+                profileViewModel.updateReminderTime(selectedHour, selectedMinute)
+                profileViewModel.toggleNotifications(true)
+                AlarmScheduler.scheduleDailyAlarm(context, selectedHour, selectedMinute)
+                Toast.makeText(
+                    context,
+                    "Daily reminders scheduled for ${String.format("%02d:%02d", selectedHour, selectedMinute)}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            profileViewModel.reminderHour,
+            profileViewModel.reminderMinute,
+            false
+        )
+        timePickerDialog.show()
+    }
+
+    val checkExactAlarmPermission = {
+        val alarmManager = context.getSystemService(AlarmManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            Toast.makeText(context, "Please allow exact alarms for precise reminders", Toast.LENGTH_LONG).show()
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+            context.startActivity(intent)
+            false
+        } else {
+            true
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            profileViewModel.toggleNotifications(true)
-            AlarmScheduler.scheduleDailyAlarm(context)
-            Toast.makeText(context, "Daily reminders scheduled", Toast.LENGTH_SHORT).show()
+            if (checkExactAlarmPermission()) {
+                showTimePicker()
+            }
         } else {
             profileViewModel.toggleNotifications(false)
             Toast.makeText(context, "Permission denied. Reminders cannot be set.", Toast.LENGTH_LONG).show()
@@ -379,12 +417,29 @@ modifier = Modifier
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Daily Workout Reminders",
-                fontSize = 15.sp,
-                color = TextColor,
-                fontWeight = FontWeight.Medium
-            )
+            Column {
+                Text(
+                    text = "Daily Workout Reminders",
+                    fontSize = 15.sp,
+                    color = TextColor,
+                    fontWeight = FontWeight.Medium
+                )
+                if (profileViewModel.notificationsEnabled) {
+                    val formattedTime = remember(profileViewModel.reminderHour, profileViewModel.reminderMinute) {
+                        val hour = profileViewModel.reminderHour
+                        val minute = profileViewModel.reminderMinute
+                        val amPm = if (hour < 12) "AM" else "PM"
+                        val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                        String.format("%02d:%02d %s", displayHour, minute, amPm)
+                    }
+                    Text(
+                        text = "Scheduled for $formattedTime",
+                        fontSize = 12.sp,
+                        color = Primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
             Switch(
                 checked = profileViewModel.notificationsEnabled,
                 onCheckedChange = { enabled ->
@@ -395,16 +450,16 @@ modifier = Modifier
                                 Manifest.permission.POST_NOTIFICATIONS
                             )
                             if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                                profileViewModel.toggleNotifications(true)
-                                AlarmScheduler.scheduleDailyAlarm(context)
-                                NotificationHelper.showGym(context)
+                                if (checkExactAlarmPermission()) {
+                                    showTimePicker()
+                                }
                             } else {
                                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             }
                         } else {
-                            profileViewModel.toggleNotifications(true)
-                            AlarmScheduler.scheduleDailyAlarm(context)
-                            NotificationHelper.showGym(context)
+                            if (checkExactAlarmPermission()) {
+                                showTimePicker()
+                            }
                         }
                     } else {
                         profileViewModel.toggleNotifications(false)

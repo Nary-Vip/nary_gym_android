@@ -42,6 +42,16 @@ class TokenManager @Inject constructor(@ApplicationContext context: Context) {
 
     fun getNotificationPreference(): Boolean = prefs.getBoolean("notifications_enabled", false)
 
+    fun saveReminderTime(hour: Int, minute: Int) {
+        prefs.edit {
+            putInt("reminder_hour", hour)
+            putInt("reminder_minute", minute)
+        }
+    }
+
+    fun getReminderHour(): Int = prefs.getInt("reminder_hour", 6)
+    fun getReminderMinute(): Int = prefs.getInt("reminder_minute", 0)
+
     fun clearTokens() {
         prefs.edit {
             remove("access_token")

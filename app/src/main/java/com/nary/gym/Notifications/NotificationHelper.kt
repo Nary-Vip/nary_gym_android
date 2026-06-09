@@ -56,6 +56,9 @@ object NotificationHelper {
             .setContentText(NOTIFICATION_DESC)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(0, "Yes", yesPendingIntent)
             .addAction(0, "Snooze", snoozePendingIntent)
 

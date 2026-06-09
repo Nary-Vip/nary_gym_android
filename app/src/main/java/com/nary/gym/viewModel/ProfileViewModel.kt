@@ -39,6 +39,12 @@ class ProfileViewModel @Inject constructor(
     var notificationsEnabled by mutableStateOf(tokenManager.getNotificationPreference())
         private set
 
+    var reminderHour by mutableStateOf(tokenManager.getReminderHour())
+        private set
+
+    var reminderMinute by mutableStateOf(tokenManager.getReminderMinute())
+        private set
+
     // Observe the current user from the shared session
     val currentUser = userSession.currentUser
         .stateIn(
@@ -52,6 +58,12 @@ class ProfileViewModel @Inject constructor(
     fun toggleNotifications(enabled: Boolean) {
         notificationsEnabled = enabled
         tokenManager.saveNotificationPreference(enabled)
+    }
+
+    fun updateReminderTime(hour: Int, minute: Int) {
+        reminderHour = hour
+        reminderMinute = minute
+        tokenManager.saveReminderTime(hour, minute)
     }
 
     fun hasToken(): Boolean = tokenManager.getAccessToken() != null
