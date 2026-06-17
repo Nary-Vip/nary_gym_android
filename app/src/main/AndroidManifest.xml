@@ -51,7 +51,15 @@
             android:name=".Notifications.NotificationActionReceiver"
             android:exported="false"/>
 
-
+        <service
+            android:name=".appfunctions.GymAppFunctionService"
+            android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
+            android:exported="true"
+            tools:targetApi="36">
+            <intent-filter>
+                <action android:name="androidx.appfunctions.AppFunctionService" />
+            </intent-filter>
+        </service>
 
     </application>
 
