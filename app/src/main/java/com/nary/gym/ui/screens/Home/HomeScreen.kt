@@ -76,11 +76,17 @@ fun AllWorkOutListing(
     var pageIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(activity?.intent) {
-        val source = activity?.intent?.getStringExtra("source")
+        val intent = activity?.intent
+        val source = intent?.getStringExtra("source")
+        val data: Uri? = intent?.data
+
         if (source == "notification_yes") {
             pageIndex = 1
-            // Clear the extra so it doesn't trigger again on recomposition if intent is re-read
             activity.intent.removeExtra("source")
+        } else if (data?.toString() == "narygym://profile") {
+            pageIndex = 2
+            // Clear the data so it doesn't trigger again on recomposition
+            activity.intent.data = null
         }
     }
 

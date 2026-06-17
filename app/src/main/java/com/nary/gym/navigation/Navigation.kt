@@ -11,7 +11,7 @@ import com.nary.gym.ui.screens.Home.AllWorkOutListing
 import com.nary.gym.ui.screens.CreateAccountScreen
 import com.nary.gym.ui.screens.LoginScreen
 import com.nary.gym.viewModel.ProfileViewModel
-
+import androidx.navigation.navDeepLink
 
 @Composable
 fun AppNavigator(navController: NavHostController, profileViewModel: ProfileViewModel = hiltViewModel(), tokenManager: TokenManager) {
@@ -61,7 +61,12 @@ fun AppNavigator(navController: NavHostController, profileViewModel: ProfileView
 
             )
         }
-        composable(NavRoutes.Home.route) {
+        composable(
+            route = NavRoutes.Home.route,
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "narygym://profile" }
+            )
+        ) {
             AllWorkOutListing(navController = navController)
         }
     }
