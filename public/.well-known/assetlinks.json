@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.nary.gym",
+      "sha256_cert_fingerprints": [
+        "25:10:BA:D8:BF:87:9B:5A:74:B8:62:C9:B9:14:68:20:23:33:E0:05:6B:EA:90:61:6E:BE:E5:49:62:23:71:7B",
+        "5D:58:93:42:73:5C:9C:59:5E:1E:11:44:AF:0F:0A:73:E3:12:C6:40:44:26:EB:EE:A6:7A:BC:C5:29:A8:48:3B"
+      ]
+    }
+  }
+]

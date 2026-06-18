@@ -53,6 +53,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.glance.appwidget.updateAll
+import com.nary.gym.widget.WorkoutWidget
+import kotlinx.coroutines.launch
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.common_widgets.ProfileField
@@ -83,7 +87,7 @@ fun AllWorkOutListing(
         if (source == "notification_yes") {
             pageIndex = 1
             activity.intent.removeExtra("source")
-        } else if (data?.toString() == "narygym://profile") {
+        } else if (data?.toString() == "narygym://profile" || data?.path == "/profile") {
             pageIndex = 2
             // Clear the data so it doesn't trigger again on recomposition
             activity.intent.data = null
@@ -109,6 +113,7 @@ fun AllWorkOutListing(
 
     val workoutCycle = WorkoutCycle(context)
     var workoutType by remember { mutableStateOf(workoutCycle.getCurrentDayWorkout()) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         bottomBar = {
@@ -186,6 +191,9 @@ fun AllWorkOutListing(
                     innerPadding = innerPadding,
                     onComplete = {
                         workoutType = workoutCycle.moveToNextDayWorkOut()
+                        scope.launch {
+                            WorkoutWidget().updateAll(context)
+                        }
                     }
                 )
             }

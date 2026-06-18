@@ -38,7 +38,7 @@ annotation class NoAuthApi
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://127.0.0.1:3888/api/"
+    private const val BASE_URL = "https://nary-gym-backend.onrender.com/api/"
 
     @Provides
     @Singleton

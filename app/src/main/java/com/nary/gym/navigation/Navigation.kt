@@ -64,7 +64,8 @@ fun AppNavigator(navController: NavHostController, profileViewModel: ProfileView
         composable(
             route = NavRoutes.Home.route,
             deepLinks = listOf(
-                navDeepLink { uriPattern = "narygym://profile" }
+                navDeepLink { uriPattern = "narygym://profile" },
+                navDeepLink { uriPattern = "https://narygym.web.app/profile" }
             )
         ) {
             AllWorkOutListing(navController = navController)
