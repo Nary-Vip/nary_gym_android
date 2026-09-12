@@ -111,8 +111,9 @@ fun AllWorkOutListing(
 
     var showEditorDialog by remember { mutableStateOf(false) }
 
-    val workoutCycle = WorkoutCycle(context)
+    val workoutCycle = remember { WorkoutCycle(context) }
     var workoutType by remember { mutableStateOf(workoutCycle.getCurrentDayWorkout()) }
+    var isCompletedToday by remember { mutableStateOf(workoutCycle.hasCompletedToday()) }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -189,8 +190,10 @@ fun AllWorkOutListing(
                     workOutType = workoutType,
                     viewModel = viewModel,
                     innerPadding = innerPadding,
+                    isCompletedToday = isCompletedToday,
                     onComplete = {
                         workoutType = workoutCycle.moveToNextDayWorkOut()
+                        isCompletedToday = workoutCycle.hasCompletedToday()
                         scope.launch {
                             WorkoutWidget().updateAll(context)
                         }

@@ -33,6 +33,7 @@ fun IndividualDayWorkout(
     workOutType: WorkOutType,
     viewModel: WorkOutViewModel,
     innerPadding: PaddingValues,
+    isCompletedToday: Boolean,
     onComplete: () -> Unit,
 ) {
     val workOuts by viewModel.allWorkouts.collectAsState()
@@ -50,11 +51,19 @@ fun IndividualDayWorkout(
         Button(
             onClick = {
                 onComplete()
-            }, colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Black
+            },
+            enabled = !isCompletedToday,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black,
+                disabledContainerColor = grey
             ), shape = RoundedCornerShape(10.dp), modifier = Modifier.height(height = 50.dp).fillMaxWidth()
         ) {
-            Text("Mark As Complete", modifier = Modifier.fillMaxWidth(), color = Color.White, textAlign = TextAlign.Center)
+            Text(
+                if (isCompletedToday) "Completed for Today" else "Mark As Complete",
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
         }
         Spacer(modifier = Modifier.size(20.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
