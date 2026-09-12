@@ -7,14 +7,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -91,82 +86,6 @@ fun ProfileField(
         )
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GenderDropdown(
-    selected: String,
-    expanded: Boolean,
-    options: List<String>,
-    onToggle: () -> Unit,
-    onSelect: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = "Gender",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = LabelColor
-        )
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { onToggle() }
-        ) {
-            OutlinedTextField(
-                value = selected.ifBlank { "Select gender" },
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = LabelColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = LabelColor
-                    )
-                },
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Accent,
-                    unfocusedBorderColor = DividerColor,
-                    focusedContainerColor = FieldBg,
-                    unfocusedContainerColor = FieldBg,
-                    focusedTextColor = if (selected.isBlank()) Color(0xFFCCCCD6) else TextColor,
-                    unfocusedTextColor = if (selected.isBlank()) Color(0xFFCCCCD6) else TextColor
-                )
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = onDismiss,
-                containerColor = Color.White
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                option,
-                                color = if (option == selected) Accent else TextColor,
-                                fontWeight = if (option == selected) FontWeight.SemiBold else FontWeight.Normal
-                            )
-                        },
-                        onClick = { onSelect(option) }
-                    )
-                }
-            }
-        }
-    }
-}
-
 
 @Composable
 fun PasswordField(

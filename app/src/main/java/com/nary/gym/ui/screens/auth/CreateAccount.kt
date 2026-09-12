@@ -81,7 +81,6 @@ fun CreateAccountScreen(
             }
 
             is CreateAccountUiState.Error -> {
-                print((uiState as CreateAccountUiState.Error).message)
                 Toast.makeText(
                     context,
                     (uiState as CreateAccountUiState.Error).message,
