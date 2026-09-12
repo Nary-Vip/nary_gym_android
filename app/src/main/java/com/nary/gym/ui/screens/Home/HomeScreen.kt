@@ -1,5 +1,6 @@
 package com.nary.gym.ui.screens.Home
 
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -71,7 +72,8 @@ import com.nary.gym.viewModel.WorkOutViewModel
 @Composable
 fun AllWorkOutListing(
     viewModel: WorkOutViewModel = hiltViewModel(),
-    navController: NavHostController
+    navController: NavHostController,
+    currentIntent: Intent?
 ) {
     val workOuts by viewModel.allWorkouts.collectAsState()
     val context = LocalContext.current
@@ -79,18 +81,19 @@ fun AllWorkOutListing(
 
     var pageIndex by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(activity?.intent) {
-        val intent = activity?.intent
-        val source = intent?.getStringExtra("source")
-        val data: Uri? = intent?.data
+    // Keyed on currentIntent (Compose state on MainActivity) rather than activity.intent
+    // directly, since onNewIntent's setIntent() is a plain field mutation Compose can't observe.
+    LaunchedEffect(currentIntent) {
+        val source = currentIntent?.getStringExtra("source")
+        val data: Uri? = currentIntent?.data
 
         if (source == "notification_yes") {
             pageIndex = 1
-            activity.intent.removeExtra("source")
+            activity?.intent?.removeExtra("source")
         } else if (data?.toString() == "narygym://profile" || data?.path == "/profile") {
             pageIndex = 2
             // Clear the data so it doesn't trigger again on recomposition
-            activity.intent.data = null
+            activity?.intent?.data = null
         }
     }
 

@@ -1,5 +1,6 @@
 package com.nary.gym.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -14,7 +15,12 @@ import com.nary.gym.viewModel.ProfileViewModel
 import androidx.navigation.navDeepLink
 
 @Composable
-fun AppNavigator(navController: NavHostController, profileViewModel: ProfileViewModel = hiltViewModel(), tokenManager: TokenManager) {
+fun AppNavigator(
+    navController: NavHostController,
+    profileViewModel: ProfileViewModel = hiltViewModel(),
+    tokenManager: TokenManager,
+    currentIntent: Intent?
+) {
     LaunchedEffect(Unit) {
         profileViewModel.unauthorizedEvent.collect {
             val currentRoute = navController.currentBackStackEntry?.destination?.route
@@ -68,7 +74,7 @@ fun AppNavigator(navController: NavHostController, profileViewModel: ProfileView
                 navDeepLink { uriPattern = "https://narygym.web.app/profile" }
             )
         ) {
-            AllWorkOutListing(navController = navController)
+            AllWorkOutListing(navController = navController, currentIntent = currentIntent)
         }
     }
 
