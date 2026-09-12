@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:description="@string/app_widget_description"
     android:initialLayout="@layout/glance_default_layout"
+    android:previewLayout="@layout/widget_preview"
+    android:previewImage="@mipmap/ic_launcher"
     android:minWidth="110dp"
     android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    tools:targetApi="31" />
