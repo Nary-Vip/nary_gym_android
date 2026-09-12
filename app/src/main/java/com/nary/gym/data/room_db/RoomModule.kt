@@ -3,8 +3,6 @@ package com.nary.gym.di
 import android.content.Context
 
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 
 import com.nary.gym.data.room_db.WorkOutsDao
 import com.nary.gym.data.room_db.WorkoutDatabase
@@ -16,10 +14,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 
 import javax.inject.Singleton
-
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -38,28 +32,6 @@ object RoomModule {
             "workout_database"
         )
             .fallbackToDestructiveMigration(true)
-            .addCallback(
-                object : RoomDatabase.Callback() {
-
-                    override fun onCreate(
-                        db: SupportSQLiteDatabase
-                    ) {
-                        super.onCreate(db)
-
-                        CoroutineScope(
-                            Dispatchers.IO
-                        ).launch {
-
-                            val database =
-                                Room.databaseBuilder(
-                                    context,
-                                    WorkoutDatabase::class.java,
-                                    "workout_database"
-                                ).build()
-                        }
-                    }
-                }
-            )
             .build()
     }
 
