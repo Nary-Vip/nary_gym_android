@@ -91,16 +91,17 @@ class ProfileViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            uiState = ProfileUiState.LogoutLoading
             try {
-                uiState = ProfileUiState.LogoutLoading
                 repository.logout()
-                userSession.clearSession()
-                tokenManager.clearTokens()
-                uiState = ProfileUiState.LogoutSuccess(message = "Logged out successfully")
-                userSession.emitUnauthorized()
             } catch (e: Exception) {
-                uiState = ProfileUiState.Error(message = e.getErrorMessage())
+                // Best-effort: the server call may fail (offline, already-expired token),
+                // but the user must still be logged out locally.
             }
+            userSession.clearSession()
+            tokenManager.clearTokens()
+            uiState = ProfileUiState.LogoutSuccess(message = "Logged out successfully")
+            userSession.emitUnauthorized()
         }
     }
 

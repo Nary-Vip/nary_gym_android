@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +39,7 @@ fun AllWorkoutListing(
     val groupedWorkouts = workOuts.groupBy { it.workOutType }
     var workOutToEdit by remember { mutableStateOf<WorkOuts?>(null) }
     var showEditorDialog by remember { mutableStateOf(false) }
+    var workOutPendingDelete by remember { mutableStateOf<WorkOuts?>(null) }
 
     LaunchedEffect(key1 = true) {
         viewModel.fetchWorkouts()
@@ -99,7 +102,7 @@ fun AllWorkoutListing(
                                 showEditorDialog = true
                             },
                             onDeleteClick = {
-                                viewModel.delete(workOut)
+                                workOutPendingDelete = workOut
                             }
                         )
                     }
@@ -122,6 +125,27 @@ fun AllWorkoutListing(
             },
             onCancel = {
                 showEditorDialog = false
+            }
+        )
+    }
+
+    workOutPendingDelete?.let { workOut ->
+        AlertDialog(
+            onDismissRequest = { workOutPendingDelete = null },
+            title = { Text("Delete workout?") },
+            text = { Text("\"${workOut.workOutName}\" will be permanently deleted. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.delete(workOut)
+                    workOutPendingDelete = null
+                }) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { workOutPendingDelete = null }) {
+                    Text("Cancel")
+                }
             }
         )
     }

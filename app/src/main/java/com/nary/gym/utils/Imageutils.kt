@@ -2,10 +2,14 @@ package com.nary.gym.utils
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.webkit.MimeTypeMap
 import java.io.File
 import java.util.UUID
+import java.net.HttpURLConnection
 import java.net.URL
+
+private const val DOWNLOAD_TIMEOUT_MS = 15_000
 
 fun copyImageToInternalStorage(
     context: Context,
@@ -50,13 +54,16 @@ fun downloadImageToInternalStorage(
     if (file.exists()) return file.absolutePath
 
     try {
-        URL(imageUrl).openStream().use { input ->
+        val connection = URL(imageUrl).openConnection() as HttpURLConnection
+        connection.connectTimeout = DOWNLOAD_TIMEOUT_MS
+        connection.readTimeout = DOWNLOAD_TIMEOUT_MS
+        connection.inputStream.use { input ->
             file.outputStream().use { output ->
                 input.copyTo(output)
             }
         }
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w("Imageutils", "Failed to download workout image: $imageUrl", e)
         return imageUrl
     }
     return file.absolutePath

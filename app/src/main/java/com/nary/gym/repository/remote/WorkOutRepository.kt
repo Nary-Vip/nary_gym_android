@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.remote.ApiService
+import com.nary.gym.data.remote.dto.Workout
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.data.room_db.WorkOutsDao
 import com.nary.gym.utils.downloadImageToInternalStorage
@@ -60,27 +61,40 @@ class WorkOutRepository @Inject constructor(
     }
 
     suspend fun syncWorkouts() {
-        if (isNetworkAvailable(context)) {
+        if (!isNetworkAvailable(context)) return
+
+        val allWorkouts = fetchAllWorkoutPages()
+
+        val workoutEntries = withContext(Dispatchers.IO) {
+            allWorkouts.map { work ->
+                WorkOuts(
+                    id = work.id,
+                    workOutName = work.workOutName,
+                    workOutImage = downloadImageToInternalStorage(context, work.workOutImage),
+                    workOutType = WorkOutType.valueOf(work.workOutType.uppercase()),
+                )
+            }
+        }
+
+        // Replace (not just insert) so workouts deleted server-side also disappear locally.
+        dao.replaceAllWorkouts(workoutEntries)
+    }
+
+    private suspend fun fetchAllWorkoutPages(): List<Workout> {
+        val allWorkouts = mutableListOf<Workout>()
+        var page = 1
+        while (true) {
             val response = api.getAllWorkOuts(
-                page = 1,
+                page = page,
                 search = null,
                 type = null,
                 limit = 100
             )
-
-            val workoutEntries = withContext(Dispatchers.IO) {
-                response.workouts.map { work ->
-                    WorkOuts(
-                        id = work.id,
-                        workOutName = work.workOutName,
-                        workOutImage = downloadImageToInternalStorage(context, work.workOutImage),
-                        workOutType = WorkOutType.valueOf(work.workOutType.uppercase()),
-                    )
-                }
-            }
-
-            dao.insertAllWorkouts(workoutEntries)
+            allWorkouts += response.workouts
+            if (response.workouts.isEmpty() || page >= response.totalPages) break
+            page++
         }
+        return allWorkouts
     }
 
     private fun isNetworkAvailable(context: Context): Boolean {
