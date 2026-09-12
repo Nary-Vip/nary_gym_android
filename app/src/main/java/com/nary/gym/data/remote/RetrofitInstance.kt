@@ -1,5 +1,6 @@
 package com.nary.gym.di
 
+import com.nary.gym.BuildConfig
 import com.nary.gym.data.remote.ApiService
 import com.nary.gym.data.remote.interceptors.AuthInterceptor
 import com.nary.gym.data.remote.interceptors.TokenAuthenticator
@@ -47,8 +48,11 @@ object NetworkModule {
 
         return HttpLoggingInterceptor()
             .apply {
-                level =
+                level = if (BuildConfig.DEBUG) {
                     HttpLoggingInterceptor.Level.BODY
+                } else {
+                    HttpLoggingInterceptor.Level.NONE
+                }
             }
     }
 
