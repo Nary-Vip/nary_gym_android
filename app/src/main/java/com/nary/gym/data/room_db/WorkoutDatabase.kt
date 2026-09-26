@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
         WorkOuts::class
     ],
     version = 5,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class WorkoutDatabase : RoomDatabase() {
