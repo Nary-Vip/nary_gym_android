@@ -49,3 +49,8 @@ ui/screens (Compose)  →  viewModel/ (Hilt @HiltViewModel)  →  repository/  �
 - Room uses destructive migration — any schema change needs a version bump and will clear cached workouts on upgrade.
 - Auth-exempt endpoint paths are hardcoded as substring checks in `AuthInterceptor` (`auth/login`, `auth/create-account`, `auth/refresh-session`) — new unauthenticated endpoints need to be added there too.
 - The `https://narygym.web.app/profile` app link depends on `public/.well-known/assetlinks.json` staying correctly deployed via Firebase Hosting (`firebase deploy` from repo root, project alias `release` → `narygym`); changing the signing key or applicationId requires regenerating that file.
+
+## Git workflow rules
+
+- **Never add a `Co-Authored-By: Claude …` trailer** (or any Claude/AI attribution) to commit messages or PR descriptions.
+- **Don't commit after finishing a task.** Leave the changes uncommitted in the working tree so the user can review the file changes first; commit only when the user explicitly asks.
