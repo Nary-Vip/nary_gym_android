@@ -15,3 +15,7 @@
 local.properties
 app/release/
 *.jks
+# Release build outputs (APK/AAB, baseline profiles, metadata)
+/release/
+*.apk
+*.aab
