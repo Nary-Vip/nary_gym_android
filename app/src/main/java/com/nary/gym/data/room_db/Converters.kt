@@ -14,4 +14,10 @@ class Converters {
     fun toWorkoutType(value: String): WorkOutType {
         return WorkOutType.valueOf(value)
     }
+
+    @TypeConverter
+    fun fromVisitSource(value: VisitSource): String = value.name
+
+    @TypeConverter
+    fun toVisitSource(value: String): VisitSource = VisitSource.valueOf(value)
 }

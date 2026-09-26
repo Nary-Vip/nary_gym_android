@@ -4,6 +4,8 @@ import android.content.Context
 
 import androidx.room.Room
 
+import com.nary.gym.data.room_db.GymVisitDao
+import com.nary.gym.data.room_db.MIGRATION_5_6
 import com.nary.gym.data.room_db.WorkOutsDao
 import com.nary.gym.data.room_db.WorkoutDatabase
 
@@ -31,6 +33,7 @@ object RoomModule {
             WorkoutDatabase::class.java,
             "workout_database"
         )
+            .addMigrations(MIGRATION_5_6)
             .fallbackToDestructiveMigration(true)
             .build()
     }
@@ -41,5 +44,13 @@ object RoomModule {
         database: WorkoutDatabase
     ): WorkOutsDao {
         return database.workoutDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGymVisitDao(
+        database: WorkoutDatabase
+    ): GymVisitDao {
+        return database.gymVisitDao()
     }
 }

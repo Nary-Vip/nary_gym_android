@@ -99,4 +99,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.room.testing)
+
+    constraints {
+        // room-testing reads schema JSON with kotlinx-serialization 1.8.x, but lifecycle/navigation
+        // pull 1.7.3 into the app and the test APK must use the app's version. 1.7.3 crashes
+        // MigrationTestHelper with AbstractMethodError, so raise the floor for the app too.
+        implementation(libs.kotlinx.serialization.core)
+    }
 }

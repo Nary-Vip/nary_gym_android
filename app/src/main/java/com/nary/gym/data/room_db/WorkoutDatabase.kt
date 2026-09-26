@@ -6,13 +6,16 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [
-        WorkOuts::class
+        WorkOuts::class,
+        GymVisit::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class WorkoutDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkOutsDao
+
+    abstract fun gymVisitDao(): GymVisitDao
 }
