@@ -88,6 +88,9 @@
 
         <!-- Gym auto check-in -->
         <receiver
+            android:name=".checkin.GeofenceBroadcastReceiver"
+            android:exported="false" />
+        <receiver
             android:name=".checkin.CheckInActionReceiver"
             android:exported="false" />
 
