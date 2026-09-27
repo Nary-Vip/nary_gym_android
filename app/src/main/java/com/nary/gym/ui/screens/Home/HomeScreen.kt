@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AllInbox
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsGymnastics
 import androidx.compose.material3.BottomAppBar
@@ -58,9 +59,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.glance.appwidget.updateAll
 import com.nary.gym.widget.WorkoutWidget
 import kotlinx.coroutines.launch
+import com.nary.gym.checkin.CheckInNotificationHelper
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.common_widgets.ProfileField
+import com.nary.gym.ui.screens.CheckIn.CheckInScreen
 import com.nary.gym.ui.screens.Profile.ProfileScreen
 import com.nary.gym.ui.screens.Workouts.AllWorkoutListing
 import com.nary.gym.ui.screens.Workouts.IndividualDayWorkout
@@ -89,6 +92,9 @@ fun AllWorkOutListing(
 
         if (source == "notification_yes") {
             pageIndex = 1
+            activity?.intent?.removeExtra("source")
+        } else if (source == CheckInNotificationHelper.SOURCE_CHECK_IN) {
+            pageIndex = 3
             activity?.intent?.removeExtra("source")
         } else if (data?.toString() == "narygym://profile" || data?.path == "/profile") {
             pageIndex = 2
@@ -155,6 +161,16 @@ fun AllWorkOutListing(
                         )
                     }
                     IconButton(onClick = {
+                        pageIndex = 3
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Check-ins",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                    IconButton(onClick = {
                         pageIndex = 2
                     }) {
                         Icon(
@@ -202,6 +218,10 @@ fun AllWorkOutListing(
                         }
                     }
                 )
+            }
+
+            3 -> {
+                CheckInScreen(innerPadding)
             }
 
             else -> {

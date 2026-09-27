@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.nary.gym.checkin.GymGeofenceManager
 import com.nary.gym.data.local.TokenManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -20,13 +21,15 @@ import java.util.concurrent.TimeUnit
  * entries), every future reminder stops with no recovery until the user happens to reboot the
  * phone or reopen the app. This worker runs independently of that chain and just re-arms the
  * alarm - idempotent, since AlarmScheduler always updates the same PendingIntent rather than
- * creating a new one.
+ * creating a new one. It also re-syncs the gym check-in geofence, which the system drops when
+ * device location is switched off and nothing else restores until the next process start.
  */
 @HiltWorker
 class ReminderWatchdogWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val gymGeofenceManager: GymGeofenceManager
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
@@ -37,6 +40,8 @@ class ReminderWatchdogWorker @AssistedInject constructor(
                 tokenManager.getReminderMinute()
             )
         }
+        // Also the backstop for the gym geofence (dropped when location is toggled off).
+        gymGeofenceManager.syncRegistration()
         return Result.success()
     }
 

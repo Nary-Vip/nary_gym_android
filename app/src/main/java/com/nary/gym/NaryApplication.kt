@@ -7,6 +7,8 @@ import com.nary.gym.Notifications.AlarmScheduler
 import com.nary.gym.Notifications.NotificationHelper
 import com.nary.gym.Notifications.ReminderWatchdogWorker
 import com.nary.gym.checkin.CheckInNotificationHelper
+import com.nary.gym.checkin.GymGeofenceManager
+import com.nary.gym.data.local.GymLocationStore
 import com.nary.gym.data.local.TokenManager
 import com.nary.gym.data.session.UserSession
 import dagger.hilt.android.HiltAndroidApp
@@ -29,6 +31,12 @@ class NaryApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var gymGeofenceManager: GymGeofenceManager
+
+    @Inject
+    lateinit var gymLocationStore: GymLocationStore
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -47,6 +55,8 @@ class NaryApplication : Application(), Configuration.Provider {
                 if (user == null && tokenManager.getAccessToken() == null) {
                     NotificationHelper.cancelNotification(this@NaryApplication)
                     AlarmScheduler.cancelDailyAlarm(this@NaryApplication)
+                    gymLocationStore.setAutoCheckInEnabled(false)
+                    gymGeofenceManager.unregister()
                 } else if (user != null || tokenManager.getAccessToken() != null) {
                     if (tokenManager.getNotificationPreference()) {
                         AlarmScheduler.scheduleDailyAlarm(
@@ -55,6 +65,7 @@ class NaryApplication : Application(), Configuration.Provider {
                             tokenManager.getReminderMinute()
                         )
                     }
+                    gymGeofenceManager.syncRegistration()
                 }
             }
         }
