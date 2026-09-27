@@ -86,6 +86,11 @@
             android:name=".Notifications.NotificationActionReceiver"
             android:exported="false" />
 
+        <!-- Gym auto check-in -->
+        <receiver
+            android:name=".checkin.CheckInActionReceiver"
+            android:exported="false" />
+
         <service
             android:name=".appfunctions.GymAppFunctionService"
             android:exported="true"

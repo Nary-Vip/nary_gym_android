@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import com.nary.gym.Notifications.AlarmScheduler
 import com.nary.gym.Notifications.NotificationHelper
 import com.nary.gym.Notifications.ReminderWatchdogWorker
+import com.nary.gym.checkin.CheckInNotificationHelper
 import com.nary.gym.data.local.TokenManager
 import com.nary.gym.data.session.UserSession
 import dagger.hilt.android.HiltAndroidApp
@@ -38,6 +39,7 @@ class NaryApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         NotificationHelper.createNotificationChannel(this)
+        CheckInNotificationHelper.createChannel(this)
         ReminderWatchdogWorker.ensureScheduled(this)
 
         applicationScope.launch {
