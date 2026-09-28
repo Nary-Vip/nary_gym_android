@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.room)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -95,6 +96,7 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.play.services.location)
+    implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.lifecycle.runtime.compose)
     testImplementation(libs.kotlinx.coroutines.test)

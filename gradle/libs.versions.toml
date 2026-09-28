@@ -88,5 +88,6 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 gms = { id = "com.google.gms.google-services", version.ref = "gms" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
 room = { id = "androidx.room", version.ref = "room" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 
