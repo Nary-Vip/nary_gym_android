@@ -1,7 +1,6 @@
 package com.nary.gym.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -34,7 +33,10 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun NaryToDoTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // Light-only: every screen uses the fixed light palette in Color.kt (TextColor, Primary,
+    // CardBg...), so following the system dark mode made headings and buttons unreadable.
+    // Supporting dark mode needs a real dark palette used by all screens first.
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

@@ -2,8 +2,10 @@ package com.nary.gym
 
 import android.app.NotificationManager
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -38,7 +40,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
-        enableEdgeToEdge()
+        // The app is light-only (see NaryToDoTheme), so keep dark status-bar icons even when the
+        // phone is in dark mode - the default would switch to white icons on our light screens.
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
         currentIntent = intent
         handleNotificationIntent(intent)
         setContent {

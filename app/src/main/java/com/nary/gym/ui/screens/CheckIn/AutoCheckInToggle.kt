@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.nary.gym.checkin.LocationPermissionStep
 import com.nary.gym.checkin.currentLocationPermissionStep
+import com.nary.gym.checkin.needsNotificationPermission
 import com.nary.gym.ui.theme.Accent
 import com.nary.gym.ui.theme.LabelColor
 import com.nary.gym.ui.theme.TextColor
@@ -35,7 +36,8 @@ import com.nary.gym.ui.theme.TextColor
 /**
  * Auto check-in switch plus the permission ladder: fine+coarse → (API 29+) background.
  * On API 30+ the background request opens the system Settings page, so the step is
- * re-read on every resume to notice the user coming back.
+ * re-read on every resume to notice the user coming back. Once enabled it also asks for
+ * notifications (API 33+) - optional, but without them check-ins are silent and have no Undo.
  */
 @Composable
 fun AutoCheckInToggle(
@@ -48,11 +50,17 @@ fun AutoCheckInToggle(
     var step by remember { mutableStateOf(context.currentLocationPermissionStep()) }
     var pendingEnable by remember { mutableStateOf(false) }
     var showBackgroundRationale by remember { mutableStateOf(false) }
+    var needsNotifications by remember { mutableStateOf(context.needsNotificationPermission()) }
 
     LifecycleResumeEffect(Unit) {
         step = context.currentLocationPermissionStep()
+        needsNotifications = context.needsNotificationPermission()
         onPauseOrDispose { }
     }
+
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { needsNotifications = context.needsNotificationPermission() }
 
     val backgroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -70,6 +78,10 @@ fun AutoCheckInToggle(
         if (pendingEnable && step == LocationPermissionStep.GRANTED) {
             pendingEnable = false
             onEnable()
+            // Optional last step: auto check-in works either way, but only visibly with this.
+            if (needsNotifications && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 
@@ -109,6 +121,14 @@ fun AutoCheckInToggle(
         if (enabled && step != LocationPermissionStep.GRANTED) {
             Text("Auto check-in is paused: location permission is missing.", color = Accent, fontSize = 13.sp)
             TextButton(onClick = { advance() }) { Text("Fix permissions") }
+        }
+        if (enabled && step == LocationPermissionStep.GRANTED && needsNotifications) {
+            Text(
+                "Notifications are off: you won't see check-ins or be able to undo them.",
+                color = LabelColor, fontSize = 13.sp
+            )
+            // Opens settings rather than re-requesting: Android stops showing the dialog after a denial.
+            TextButton(onClick = { openNotificationSettings(context) }) { Text("Allow notifications") }
         }
         if (step == LocationPermissionStep.NEED_PRECISE) {
             Text("Auto check-in needs Precise location, not Approximate.", color = LabelColor, fontSize = 13.sp)
@@ -158,6 +178,14 @@ private fun backgroundOptionLabel(context: Context): CharSequence =
 private fun openAppSettings(context: Context) {
     context.startActivity(
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
+}
+
+private fun openNotificationSettings(context: Context) {
+    context.startActivity(
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     )
 }
