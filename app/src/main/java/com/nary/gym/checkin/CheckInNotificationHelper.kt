@@ -73,7 +73,7 @@ object CheckInNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_notify)
             .setContentIntent(openPendingIntent)
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_STATUS)

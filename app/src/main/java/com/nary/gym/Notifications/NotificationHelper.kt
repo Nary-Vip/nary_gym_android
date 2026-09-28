@@ -54,7 +54,7 @@ object NotificationHelper {
         val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
             .setContentTitle("Get Ready for the GYM")
             .setContentText(NOTIFICATION_DESC)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_notify)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
