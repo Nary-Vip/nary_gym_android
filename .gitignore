@@ -19,3 +19,6 @@ app/release/
 /release/
 *.apk
 *.aab
+
+# Local agent scratch (brainstorm mockups, plan progress ledgers)
+/.superpowers/
