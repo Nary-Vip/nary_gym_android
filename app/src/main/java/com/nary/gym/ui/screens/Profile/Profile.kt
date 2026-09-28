@@ -342,9 +342,19 @@ modifier = Modifier
             color = LabelColor,
             letterSpacing = 1.sp
         )
+        // The profile is fetched on every app start and the backend can take a while to wake up;
+        // until it arrives the fields are blank, so say so and don't allow editing/saving.
+        val profileLoaded = user != null
+        if (!profileLoaded) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = LabelColor)
+                Text("  Loading your profile…", fontSize = 13.sp, color = LabelColor)
+            }
+        }
         ProfileField(
             label = "Full Name",
             value = name,
+            readOnly = !profileLoaded,
             onValueChange = { name = it },
             icon = Icons.Default.Person,
             placeholder = "Enter your name",
@@ -354,6 +364,7 @@ modifier = Modifier
         ProfileField(
             label = "Phone Number",
             value = phone,
+            readOnly = !profileLoaded,
             onValueChange = { phone = it },
             icon = Icons.Default.Phone,
             placeholder = "+91 00000 00000",
@@ -380,7 +391,7 @@ modifier = Modifier
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                enabled = uiState !is ProfileUiState.UpdateProfileLoading,
+                enabled = profileLoaded && uiState !is ProfileUiState.UpdateProfileLoading,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {

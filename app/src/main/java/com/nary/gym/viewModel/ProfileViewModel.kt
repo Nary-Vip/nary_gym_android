@@ -71,9 +71,13 @@ class ProfileViewModel @Inject constructor(
     fun updateProfile(name: String, phone: String, imageUri: Uri?) {
         viewModelScope.launch {
             try {
-                val current = currentUser.value
-                val updatedName = if (name != current?.name) name else null
-                val updatedPhone = if (phone != current?.phone) phone else null
+                val changes = profileChanges(currentUser.value, name, phone)
+                if (changes == null) {
+                    uiState = ProfileUiState.Error(message = "Your profile is still loading. Try again in a moment.")
+                    return@launch
+                }
+                val updatedName = changes.name
+                val updatedPhone = changes.phone
 
                 if (updatedName == null && updatedPhone == null && imageUri == null) {
                     uiState = ProfileUiState.Idle
