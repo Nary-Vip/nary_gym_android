@@ -26,7 +26,7 @@ import androidx.glance.appwidget.updateAll
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.nary.gym.ui.screens.Workouts.AllWorkoutListing
 import com.nary.gym.ui.screens.Workouts.IndividualDayWorkout
-import com.nary.gym.ui.screens.Workouts.workoutEditor
+import com.nary.gym.ui.screens.Workouts.WorkoutEditor
 import com.nary.gym.utils.WorkoutCycle
 import com.nary.gym.viewModel.WorkOutViewModel
 import com.nary.gym.widget.WorkoutWidget
@@ -90,7 +90,7 @@ fun LegacyWorkoutsTab(contentPadding: PaddingValues, viewModel: WorkOutViewModel
         )
     }
     if (showEditor) {
-        workoutEditor(
+        WorkoutEditor(
             workout = null,
             onSave = { workout ->
                 if (workout != null) viewModel.insert(workout)

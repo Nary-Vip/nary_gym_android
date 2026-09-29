@@ -74,7 +74,7 @@ import com.nary.gym.viewModel.WorkOutViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun workoutEditor(
+fun WorkoutEditor(
     workout: WorkOuts?,
     onSave: (WorkOuts?) -> Unit,
     onCancel: () -> Unit
