@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.nary.gym.Notifications.NotificationHelper
 import com.nary.gym.data.local.TokenManager
 import com.nary.gym.navigation.AppNavigator
+import com.nary.gym.navigation.SOURCE_REMINDER
 import com.nary.gym.ui.theme.NaryToDoTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -53,7 +54,7 @@ class MainActivity : ComponentActivity() {
         }
     }
     private fun handleNotificationIntent(intent: Intent?) {
-        if (intent?.getStringExtra("source") == "notification_yes") {
+        if (intent?.getStringExtra("source") == SOURCE_REMINDER) {
             val manager = getSystemService(NotificationManager::class.java)
             manager.cancel(NotificationHelper.NOTIFICATION_ID)
         }

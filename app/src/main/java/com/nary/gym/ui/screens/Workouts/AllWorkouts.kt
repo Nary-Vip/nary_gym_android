@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nary.gym.data.room_db.WorkOuts
-import com.nary.gym.ui.screens.Home.WorkoutEditor
 import com.nary.gym.ui.screens.WorkoutCard
 import com.nary.gym.viewModel.WorkOutViewModel
 

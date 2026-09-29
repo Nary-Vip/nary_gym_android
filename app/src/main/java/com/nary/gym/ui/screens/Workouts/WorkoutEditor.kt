@@ -1,4 +1,4 @@
-package com.nary.gym.ui.screens.Home
+package com.nary.gym.ui.screens.Workouts
 
 import android.content.Intent
 import android.net.Uri
@@ -72,182 +72,9 @@ import com.nary.gym.utils.WorkoutCycle
 import com.nary.gym.utils.copyImageToInternalStorage
 import com.nary.gym.viewModel.WorkOutViewModel
 
-@Composable
-fun AllWorkOutListing(
-    viewModel: WorkOutViewModel = hiltViewModel(),
-    navController: NavHostController,
-    currentIntent: Intent?
-) {
-    val workOuts by viewModel.allWorkouts.collectAsState()
-    val context = LocalContext.current
-    val activity = context as? android.app.Activity
-
-    var pageIndex by remember { mutableIntStateOf(0) }
-
-    // Keyed on currentIntent (Compose state on MainActivity) rather than activity.intent
-    // directly, since onNewIntent's setIntent() is a plain field mutation Compose can't observe.
-    LaunchedEffect(currentIntent) {
-        val source = currentIntent?.getStringExtra("source")
-        val data: Uri? = currentIntent?.data
-
-        if (source == "notification_yes") {
-            pageIndex = 1
-            activity?.intent?.removeExtra("source")
-        } else if (source == CheckInNotificationHelper.SOURCE_CHECK_IN) {
-            pageIndex = 3
-            activity?.intent?.removeExtra("source")
-        } else if (data?.toString() == "narygym://profile" || data?.path == "/profile") {
-            pageIndex = 2
-            // Clear the data so it doesn't trigger again on recomposition
-            activity?.intent?.data = null
-        }
-    }
-
-    LaunchedEffect(viewModel.errorMessage) {
-        viewModel.errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-            viewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(true) {
-        viewModel.getCurrentUser()
-    }
-
-    var currentWorkout by remember {
-        mutableStateOf<WorkOuts?>(null)
-    }
-
-    var showEditorDialog by remember { mutableStateOf(false) }
-
-    val workoutCycle = remember { WorkoutCycle(context) }
-    var workoutType by remember { mutableStateOf(workoutCycle.getCurrentDayWorkout()) }
-    var isCompletedToday by remember { mutableStateOf(workoutCycle.hasCompletedToday()) }
-    val scope = rememberCoroutineScope()
-
-    Scaffold(
-        bottomBar = {
-            BottomAppBar(
-                modifier = Modifier.height(100.dp),
-                containerColor = Color.Black,
-                contentColor = Color.White
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = {
-                        pageIndex = 0
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Today",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        pageIndex = 1
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.AllInbox,
-                            contentDescription = "Today",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = {
-                        pageIndex = 3
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Check-ins",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = {
-                        pageIndex = 2
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Today",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
-            if (pageIndex == 0) {
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        showEditorDialog = true
-                    }, shape = RoundedCornerShape(20.dp),
-                    containerColor = grey,
-                    contentColor = Color.White,
-                    elevation = FloatingActionButtonDefaults.elevation(10.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Button")
-                    Text("New workOuts", modifier = Modifier.padding(start = 8.dp))
-                }
-            }
-        }
-    ) { innerPadding ->
-        when (pageIndex) {
-            0 -> {
-                AllWorkoutListing(innerPadding, workOuts, viewModel)
-            }
-
-            1 -> {
-                IndividualDayWorkout(
-                    workOutType = workoutType,
-                    viewModel = viewModel,
-                    innerPadding = innerPadding,
-                    isCompletedToday = isCompletedToday,
-                    onComplete = {
-                        workoutType = workoutCycle.moveToNextDayWorkOut()
-                        isCompletedToday = workoutCycle.hasCompletedToday()
-                        scope.launch {
-                            WorkoutWidget().updateAll(context)
-                        }
-                    }
-                )
-            }
-
-            3 -> {
-                CheckInScreen(innerPadding)
-            }
-
-            else -> {
-                ProfileScreen(innerPadding)
-            }
-        }
-        if (showEditorDialog) {
-            WorkoutEditor(
-                workout = null,
-                onSave = { workout ->
-                    if (workout != null) {
-                        viewModel.insert(workout)
-                    }
-                    showEditorDialog = false
-                },
-                onCancel = {
-                    showEditorDialog = false
-                }
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkoutEditor(
+fun workoutEditor(
     workout: WorkOuts?,
     onSave: (WorkOuts?) -> Unit,
     onCancel: () -> Unit
@@ -307,7 +134,7 @@ fun WorkoutEditor(
             Spacer(modifier = Modifier.size(20.dp))
             ProfileField(
                 label = "Task Name",
-                value = currentWorkout.workOutName ?: "",
+                value = currentWorkout.workOutName,
                 onValueChange = {
                     currentWorkout = currentWorkout.copy(
                         workOutName = it
@@ -325,7 +152,7 @@ fun WorkoutEditor(
             ) {
                 ProfileField(
                     label = "Task Name",
-                    value = currentWorkout?.workOutType?.title ?: "",
+                    value = currentWorkout.workOutType.title,
                     onValueChange = {},
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
@@ -357,7 +184,7 @@ fun WorkoutEditor(
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
-            if (!currentWorkout.workOutName.isBlank() || !currentWorkout.workOutImage.isBlank()) {
+            if (currentWorkout.workOutName.isNotBlank() || currentWorkout.workOutImage.isNotBlank()) {
                 val imagePath = currentWorkout.workOutImage
                 AsyncImage(
                     model = imagePath,
@@ -388,7 +215,7 @@ fun WorkoutEditor(
                     onSave(currentWorkout)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !currentWorkout.workOutName.isBlank()
+                enabled = currentWorkout.workOutName.isNotBlank()
             ) {
                 Text("Save Workout")
             }
