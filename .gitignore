@@ -22,3 +22,6 @@ app/release/
 
 # Local agent scratch (brainstorm mockups, plan progress ledgers)
 /.superpowers/
+
+# Local agent guidance (kept out of the repo)
+/CLAUDE.md
