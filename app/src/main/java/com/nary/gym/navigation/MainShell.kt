@@ -1,0 +1,74 @@
+package com.nary.gym.navigation
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.nary.gym.ui.components.NaryTopAppBar
+import kotlinx.coroutines.flow.first
+
+@Composable
+fun MainShell(
+    tabNavController: NavHostController,
+    requestedTab: Tab?,
+    onRequestedTabHandled: () -> Unit,
+    avatarName: String?,
+    avatarImageUrl: String?,
+    onAvatarClick: () -> Unit,
+    tabContent: @Composable (tab: Tab, contentPadding: PaddingValues) -> Unit,
+) {
+    val backStackEntry by tabNavController.currentBackStackEntryAsState()
+    val currentTab = Tab.entries.firstOrNull { tab ->
+        backStackEntry?.destination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
+    } ?: Tab.TODAY
+
+    Scaffold(
+        topBar = {
+            NaryTopAppBar(
+                title = currentTab.label,
+                avatarName = avatarName,
+                avatarImageUrl = avatarImageUrl,
+                onAvatarClick = onAvatarClick,
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                Tab.entries.forEach { tab ->
+                    val selected = tab == currentTab
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = { tabNavController.navigateToTab(tab) },
+                        icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
+                        label = { Text(tab.label) },
+                    )
+                }
+            }
+        },
+    ) { padding ->
+        NavHost(navController = tabNavController, startDestination = TodayRoute) {
+            composable<TodayRoute> { tabContent(Tab.TODAY, padding) }
+            composable<WorkoutsRoute> { tabContent(Tab.WORKOUTS, padding) }
+            composable<CheckInsRoute> { tabContent(Tab.CHECK_INS, padding) }
+        }
+    }
+
+    LaunchedEffect(requestedTab) {
+        if (requestedTab != null) {
+            snapshotFlow { tabNavController.currentBackStackEntry }.first { it != null }
+            tabNavController.navigateToTab(requestedTab)
+            onRequestedTabHandled()
+        }
+    }
+}

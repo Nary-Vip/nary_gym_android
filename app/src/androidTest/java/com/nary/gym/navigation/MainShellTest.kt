@@ -1,0 +1,89 @@
+package com.nary.gym.navigation
+
+import androidx.activity.ComponentActivity
+import androidx.compose.material3.Text
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.navigation.compose.rememberNavController
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.nary.gym.ui.theme.NaryToDoTheme
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class MainShellTest {
+
+    @get:Rule
+    val rule = createAndroidComposeRule<ComponentActivity>()
+
+    private fun setShell(requestedTab: Tab? = null, onAvatarClick: () -> Unit = {}) {
+        rule.setContent {
+            NaryToDoTheme {
+                MainShell(
+                    tabNavController = rememberNavController(),
+                    requestedTab = requestedTab,
+                    onRequestedTabHandled = {},
+                    avatarName = "Naresh",
+                    avatarImageUrl = null,
+                    onAvatarClick = onAvatarClick,
+                ) { tab, _ -> Text("content-${tab.name}") }
+            }
+        }
+    }
+
+    private fun navItem(label: String) = rule.onNode(hasText(label) and hasClickAction())
+
+    private fun pressBack() = rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+
+    @Test
+    fun showsThreeLabelledTabs_andStartsOnToday() {
+        setShell()
+        navItem("Today").assertIsSelected()
+        navItem("Workouts").assertExists()
+        navItem("Check-ins").assertExists()
+        rule.onNodeWithText("content-TODAY").assertExists()
+    }
+
+    @Test
+    fun selectingWorkouts_thenBack_returnsToToday() {
+        setShell()
+        navItem("Workouts").performClick()
+        rule.onNodeWithText("content-WORKOUTS").assertExists()
+        pressBack()
+        rule.onNodeWithText("content-TODAY").assertExists()
+        navItem("Today").assertIsSelected()
+    }
+
+    @Test
+    fun reselectingTab_doesNotStack_andBackReturnsToToday() {
+        setShell()
+        navItem("Workouts").performClick()
+        navItem("Workouts").performClick()
+        navItem("Check-ins").performClick()
+        navItem("Check-ins").performClick()
+        pressBack()
+        rule.onNodeWithText("content-TODAY").assertExists()
+    }
+
+    @Test
+    fun avatar_invokesProfileCallback() {
+        var opened = false
+        setShell(onAvatarClick = { opened = true })
+        rule.onNodeWithContentDescription("Profile").performClick()
+        assertTrue(opened)
+    }
+
+    @Test
+    fun requestedTab_isOpened() {
+        setShell(requestedTab = Tab.CHECK_INS)
+        rule.onNodeWithText("content-CHECK_INS").assertExists()
+        navItem("Check-ins").assertIsSelected()
+    }
+}
