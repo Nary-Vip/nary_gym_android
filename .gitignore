@@ -25,3 +25,6 @@ app/release/
 
 # Local agent guidance (kept out of the repo)
 /CLAUDE.md
+
+# Local design specs and implementation plans (kept out of the repo)
+/docs/superpowers/
