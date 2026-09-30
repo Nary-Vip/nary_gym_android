@@ -2,6 +2,9 @@ package com.nary.gym.navigation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
@@ -85,5 +88,27 @@ class MainShellTest {
         setShell(requestedTab = Tab.CHECK_INS)
         rule.onNodeWithText("content-CHECK_INS").assertExists()
         navItem("Check-ins").assertIsSelected()
+    }
+
+    @Test
+    fun requestedTab_arrivingAfterShellIsShown_isOpened() {
+        var requested by mutableStateOf<Tab?>(null)
+        rule.setContent {
+            NaryToDoTheme {
+                MainShell(
+                    tabNavController = rememberNavController(),
+                    requestedTab = requested,
+                    onRequestedTabHandled = { requested = null },
+                    avatarName = "Naresh",
+                    avatarImageUrl = null,
+                    onAvatarClick = {},
+                ) { tab, _ -> Text("content-${tab.name}") }
+            }
+        }
+        rule.onNodeWithText("content-TODAY").assertExists()
+        rule.runOnIdle { requested = Tab.CHECK_INS }
+        rule.onNodeWithText("content-CHECK_INS").assertExists()
+        rule.runOnIdle { requested = Tab.WORKOUTS }
+        rule.onNodeWithText("content-WORKOUTS").assertExists()
     }
 }

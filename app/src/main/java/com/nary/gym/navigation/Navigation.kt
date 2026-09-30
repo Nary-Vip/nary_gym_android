@@ -2,6 +2,7 @@ package com.nary.gym.navigation
 
 import android.app.Activity
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,7 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -43,7 +44,8 @@ fun AppNavigator(
 ) {
     val context = LocalContext.current
     // A tab asked for by a notification tap; MainShell applies it and clears it.
-    var requestedTab by remember { mutableStateOf<Tab?>(null) }
+    // Saveable so a pending request survives rotation while it waits for MainShell.
+    var requestedTab by rememberSaveable { mutableStateOf<Tab?>(null) }
 
     LaunchedEffect(Unit) {
         profileViewModel.unauthorizedEvent.collect {
@@ -51,7 +53,7 @@ fun AppNavigator(
             val onAuthScreen = destination?.hasRoute(LoginRoute::class) == true ||
                 destination?.hasRoute(CreateAccountRoute::class) == true
             if (!onAuthScreen) {
-                navController.navigate(LoginRoute) { popUpTo(0) { inclusive = true } }
+                navController.navigate(LoginRoute) { popUpTo(navController.graph.id) { inclusive = true } }
             }
         }
     }
@@ -71,7 +73,10 @@ fun AppNavigator(
         if (tokenManager.getAccessToken() == null) return@LaunchedEffect // logged out: stay on Login
         when (target) {
             LaunchTarget.Profile -> navController.navigate(ProfileRoute) { launchSingleTop = true }
-            is LaunchTarget.OpenTab -> requestedTab = target.tab
+            is LaunchTarget.OpenTab -> {
+                navController.popBackStack(MainRoute, inclusive = false)
+                requestedTab = target.tab
+            }
             LaunchTarget.None -> Unit
         }
     }
@@ -101,7 +106,17 @@ fun AppNavigator(
         composable<MainRoute> {
             val workOutViewModel: WorkOutViewModel = hiltViewModel()
             val user by profileViewModel.currentUser.collectAsState()
-            LaunchedEffect(Unit) { workOutViewModel.getCurrentUser() }
+            // Fetch once per session (not on every return from Profile), and surface failures -
+            // e.g. offline - instead of leaving the avatar and Profile silently empty.
+            LaunchedEffect(Unit) {
+                if (profileViewModel.currentUser.value == null) workOutViewModel.getCurrentUser()
+            }
+            LaunchedEffect(workOutViewModel.errorMessage) {
+                workOutViewModel.errorMessage?.let {
+                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                    workOutViewModel.clearError()
+                }
+            }
 
             MainShell(
                 tabNavController = rememberNavController(),

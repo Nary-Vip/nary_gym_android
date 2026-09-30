@@ -4,12 +4,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-/*
- * Volt - Material 3 colour scheme generated with Material Color Utilities (classic Theme Builder
- * tone mapping) from seed #C6FF3D (primary/secondary) and #FF8A3D (tertiary). Values are the
- * spec's §3.1 table; ColorsContrastTest keeps every on-colour pair at WCAG AA or better.
- * Screens must read these via MaterialTheme.colorScheme - never reference the hex values directly.
- */
 
 val VoltLightColors = lightColorScheme(
     primary = Color(0xFF4C6700),

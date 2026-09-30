@@ -41,10 +41,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
-        // The app is light-only (see NaryToDoTheme), so keep dark status-bar icons even when the
-        // phone is in dark mode - the default would switch to white icons on our light screens.
+
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
-        currentIntent = intent
+        val launchedFromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        currentIntent = if (savedInstanceState == null && !launchedFromHistory) intent else null
         handleNotificationIntent(intent)
         setContent {
             NaryToDoTheme {

@@ -9,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -66,7 +65,7 @@ fun MainShell(
 
     LaunchedEffect(requestedTab) {
         if (requestedTab != null) {
-            snapshotFlow { tabNavController.currentBackStackEntry }.first { it != null }
+            tabNavController.currentBackStackEntryFlow.first()
             tabNavController.navigateToTab(requestedTab)
             onRequestedTabHandled()
         }
