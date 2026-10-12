@@ -4,6 +4,8 @@ import com.nary.gym.data.room_db.GymVisit
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.TemporalAdjusters
 
 /** "45m", "1h", "1h 12m". */
@@ -33,3 +35,11 @@ fun weeklySummary(visits: List<GymVisit>, now: Instant, zone: ZoneId): WeeklySum
         totalMillis = completed.sumOf { it.checkOutAt!! - it.checkInAt }
     )
 }
+
+/** "6:42 pm" in the user's locale (12/24 h follows the phone). */
+fun formatClockTime(millis: Long, zone: ZoneId): String =
+    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(Instant.ofEpochMilli(millis).atZone(zone))
+
+/** "Mon, 28 Sep" */
+fun formatDayLabel(millis: Long, zone: ZoneId): String =
+    DateTimeFormatter.ofPattern("EEE, d MMM").format(Instant.ofEpochMilli(millis).atZone(zone))
