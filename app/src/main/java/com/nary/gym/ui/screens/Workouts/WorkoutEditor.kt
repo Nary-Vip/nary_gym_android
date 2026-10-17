@@ -3,190 +3,169 @@ package com.nary.gym.ui.screens.Workouts
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SportsGymnastics
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.launch
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
-import com.nary.gym.ui.common_widgets.ProfileField
+import com.nary.gym.ui.components.NaryTextField
 import com.nary.gym.utils.copyImageToInternalStorage
 
+/**
+ * Add/edit sheet for a workout. [onDelete] (edit mode only) is the accessible alternative to
+ * swipe-to-delete. [initialType] preselects the muscle group when adding from Today.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutEditor(
     workout: WorkOuts?,
-    onSave: (WorkOuts?) -> Unit,
-    onCancel: () -> Unit
+    onSave: (WorkOuts) -> Unit,
+    onCancel: () -> Unit,
+    onDelete: ((WorkOuts) -> Unit)? = null,
+    initialType: WorkOutType = WorkOutType.CHEST,
 ) {
     val context = LocalContext.current
-    var currentWorkout by remember {
+    var draft by remember {
         mutableStateOf(
-            workout ?: WorkOuts(
-                workOutName = "",
-                workOutType = WorkOutType.CHEST,
-                workOutImage = "",
-                id = ""
-            )
+            workout ?: WorkOuts(id = "", workOutName = "", workOutType = initialType, workOutImage = "")
         )
     }
+    var typeMenuOpen by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
 
-    var expanded by remember { mutableStateOf(false) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-
-        uri?.let {
-
-            val savedPath = copyImageToInternalStorage(
-                context = context,
-                uri = it
-            )
-
-            currentWorkout = currentWorkout.copy(
-                workOutImage = savedPath
-            )
-        }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { draft = draft.copy(workOutImage = copyImageToInternalStorage(context = context, uri = it)) }
     }
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
-        containerColor = Color.White
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
-
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
-                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-
             Text(
-                text = if (workout == null) {
-                    "Create Workout"
-                } else {
-                    "Edit Workout"
-                },
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                if (workout == null) "Add workout" else "Edit workout",
+                style = MaterialTheme.typography.headlineSmall,
             )
-            Spacer(modifier = Modifier.size(20.dp))
-            ProfileField(
-                label = "Task Name",
-                value = currentWorkout.workOutName,
-                onValueChange = {
-                    currentWorkout = currentWorkout.copy(
-                        workOutName = it
-                    )
-                },
-                icon = Icons.Default.SportsGymnastics,
-                placeholder = "Chest Press",
-                keyboardType = KeyboardType.Text
-            )
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = {
-                    expanded = !expanded
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AsyncImage(
+                    model = draft.workOutImage.ifBlank { null },
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                )
+                Spacer(Modifier.width(16.dp))
+                OutlinedButton(onClick = { imagePicker.launch("image/*") }) {
+                    Icon(Icons.Filled.Image, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (draft.workOutImage.isBlank()) "Add photo" else "Change photo")
                 }
-            ) {
-                ProfileField(
-                    label = "Task Name",
-                    value = currentWorkout.workOutType.title,
+            }
+            NaryTextField(
+                value = draft.workOutName,
+                onValueChange = { draft = draft.copy(workOutName = it) },
+                label = "Exercise name",
+                leadingIcon = Icons.Filled.FitnessCenter,
+                placeholder = "Chest press",
+            )
+            ExposedDropdownMenuBox(expanded = typeMenuOpen, onExpandedChange = { typeMenuOpen = it }) {
+                OutlinedTextField(
+                    value = draft.workOutType.title,
                     onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Muscle group") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeMenuOpen) },
+                    shape = MaterialTheme.shapes.small,
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                         .fillMaxWidth(),
-                    readOnly = true,
-                    icon = Icons.Default.SportsGymnastics,
-                    placeholder = "Shoulder",
-                    keyboardType = KeyboardType.Text
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                    }
-                ) {
+                ExposedDropdownMenu(expanded = typeMenuOpen, onDismissRequest = { typeMenuOpen = false }) {
                     WorkOutType.entries.forEach { type ->
                         DropdownMenuItem(
-                            text = {
-                                Text(type.title)
-                            },
+                            text = { Text(type.title) },
                             onClick = {
-                                currentWorkout = currentWorkout.copy(
-                                    workOutType = type
-                                )
-                                expanded = false
-                            }
+                                draft = draft.copy(workOutType = type)
+                                typeMenuOpen = false
+                            },
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.size(16.dp))
-            if (currentWorkout.workOutName.isNotBlank() || currentWorkout.workOutImage.isNotBlank()) {
-                val imagePath = currentWorkout.workOutImage
-                AsyncImage(
-                    model = imagePath,
-                    contentDescription = currentWorkout.workOutName,
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            }
             Button(
-                onClick = {
-                    imagePickerLauncher.launch("image/*")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    if (currentWorkout.workOutName.isBlank()) {
-                        "Select Workout Image"
-                    } else {
-                        "Change Workout Image"
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.size(24.dp))
-            Button(
-                onClick = {
-                    onSave(currentWorkout)
-                },
+                onClick = { onSave(draft) },
+                enabled = draft.workOutName.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
-                enabled = currentWorkout.workOutName.isNotBlank()
-            ) {
-                Text("Save Workout")
+            ) { Text("Save workout") }
+            if (workout != null && onDelete != null) {
+                TextButton(
+                    onClick = { confirmDelete = true },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                ) { Text("Delete workout") }
             }
         }
+    }
+
+    if (confirmDelete && workout != null && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete workout?") },
+            text = { Text("\"${workout.workOutName}\" will be permanently deleted. This can't be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { confirmDelete = false; onDelete(workout) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+        )
     }
 }

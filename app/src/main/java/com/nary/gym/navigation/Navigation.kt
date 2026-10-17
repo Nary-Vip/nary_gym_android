@@ -29,7 +29,7 @@ import com.nary.gym.data.local.TokenManager
 import com.nary.gym.ui.screens.CheckIn.CheckInScreen
 import com.nary.gym.ui.screens.CreateAccountScreen
 import com.nary.gym.ui.screens.Home.LegacyTodayTab
-import com.nary.gym.ui.screens.Home.LegacyWorkoutsTab
+import com.nary.gym.ui.screens.Workouts.WorkoutsScreen
 import com.nary.gym.ui.screens.LoginScreen
 import com.nary.gym.ui.screens.Profile.ProfileScreen
 import com.nary.gym.viewModel.ProfileViewModel
@@ -128,7 +128,7 @@ fun AppNavigator(
             ) { tab, padding ->
                 when (tab) {
                     Tab.TODAY -> LegacyTodayTab(padding)
-                    Tab.WORKOUTS -> LegacyWorkoutsTab(padding)
+                    Tab.WORKOUTS -> WorkoutsScreen(padding)
                     Tab.CHECK_INS -> CheckInScreen(padding)
                 }
             }
