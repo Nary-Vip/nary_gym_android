@@ -143,10 +143,7 @@ fun CreateAccountScreen(
                     Text("Create account")
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Text("Already have an account?", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = onNavigateToLogin) { Text("Log in") }
-            }
+            AuthSwitchPrompt("Already have an account?", "Log in", onNavigateToLogin)
         }
     }
 }

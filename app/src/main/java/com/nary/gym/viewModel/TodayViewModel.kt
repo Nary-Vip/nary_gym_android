@@ -43,6 +43,7 @@ data class TodayUiState(
     val weekMillis: Long = 0,
     val openVisit: GymVisit? = null,
     val autoCheckInReady: Boolean = true,
+    val syncing: Boolean = false,
 )
 
 private data class CycleSnapshot(val current: WorkOutType, val completedToday: Boolean)
@@ -59,6 +60,7 @@ class TodayViewModel @Inject constructor(
 
     private val cycle = MutableStateFlow(snapshot())
     private val autoCheckInReady = MutableStateFlow(isAutoCheckInReady())
+    private val syncing = MutableStateFlow(true)
 
     var message by mutableStateOf<String?>(null)
         private set
@@ -87,7 +89,8 @@ class TodayViewModel @Inject constructor(
             openVisit = openVisit,
             autoCheckInReady = ready,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodayUiState())
+    }.combine(syncing) { state, isSyncing -> state.copy(syncing = isSyncing) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodayUiState())
 
     init {
         viewModelScope.launch {
@@ -98,6 +101,8 @@ class TodayViewModel @Inject constructor(
                     ensureActive()
                 }
                 message = e.getErrorMessage()
+            } finally {
+                syncing.value = false
             }
         }
     }

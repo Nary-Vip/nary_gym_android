@@ -1,6 +1,10 @@
 package com.nary.gym.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,5 +36,17 @@ fun AuthHeader(title: String, subtitle: String, content: @Composable ColumnScope
             Text(subtitle, style = MaterialTheme.typography.bodyLarge)
             content()
         }
+    }
+}
+
+@Composable
+fun AuthSwitchPrompt(question: String, action: String, onAction: () -> Unit) {
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(question, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        TextButton(onClick = onAction) { Text(action) }
     }
 }

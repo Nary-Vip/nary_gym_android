@@ -55,6 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.components.EmptyState
+import com.nary.gym.ui.components.LoadingRow
 import com.nary.gym.ui.components.SectionHeader
 import com.nary.gym.ui.components.WorkoutListItem
 import com.nary.gym.viewModel.WorkOutViewModel
@@ -79,7 +80,8 @@ fun WorkoutsScreen(contentPadding: PaddingValues, viewModel: WorkOutViewModel = 
         contentPadding = contentPadding,
         onAdd = { creating = true },
         onEdit = { editing = it },
-        onDelete = viewModel::delete,
+        onDelete = { workout, onFailed -> viewModel.delete(workout, onFailure = onFailed) },
+        isLoading = viewModel.isLoading,
     )
 
     if (creating) {
@@ -106,7 +108,8 @@ fun WorkoutsContent(
     contentPadding: PaddingValues,
     onAdd: () -> Unit,
     onEdit: (WorkOuts) -> Unit,
-    onDelete: (WorkOuts) -> Unit,
+    onDelete: (WorkOuts, onFailed: () -> Unit) -> Unit,
+    isLoading: Boolean = false,
 ) {
     var filter by rememberSaveable { mutableStateOf<WorkOutType?>(null) } 
     var pendingDelete by remember { mutableStateOf<WorkOuts?>(null) }
@@ -116,10 +119,10 @@ fun WorkoutsContent(
 
     fun commit(workout: WorkOuts) {
         committedIds += workout.id
-        currentOnDelete(workout)
+        currentOnDelete(workout) { committedIds -= workout.id }
     }
 
-    DisposableEffect(Unit) { onDispose { pendingDelete?.let { currentOnDelete(it) } } }
+    DisposableEffect(Unit) { onDispose { pendingDelete?.let { currentOnDelete(it) {} } } }
 
     LaunchedEffect(pendingDelete) {
         val workout = pendingDelete ?: return@LaunchedEffect
@@ -168,7 +171,9 @@ fun WorkoutsContent(
                     }
                 }
             }
-            if (shown.isEmpty()) {
+            if (isLoading && workouts.isEmpty()) {
+                item { LoadingRow("Loading workouts…") }
+            } else if (shown.isEmpty()) {
                 item {
                     EmptyState(
                         title = if (filter == null) "No workouts yet" else "No ${filter!!.title} workouts",

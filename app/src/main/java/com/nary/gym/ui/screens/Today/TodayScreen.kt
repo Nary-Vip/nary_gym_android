@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.components.EmptyState
 import com.nary.gym.ui.components.LiveStatusCard
+import com.nary.gym.ui.components.LoadingRow
 import com.nary.gym.ui.components.SectionHeader
 import com.nary.gym.ui.components.StatTile
 import com.nary.gym.ui.components.WorkoutListItem
@@ -171,7 +172,9 @@ fun TodayContent(
             item { TextButton(onClick = onSetUpCheckIn) { Text("Set up auto check-in") } }
         }
         item { SectionHeader("Today's exercises", count = state.exercises.size) }
-        if (state.exercises.isEmpty()) {
+        if (state.exercises.isEmpty() && state.syncing) {
+            item { LoadingRow("Loading workouts…") }
+        } else if (state.exercises.isEmpty()) {
             item {
                 EmptyState(
                     title = "No ${state.dayType.title} exercises yet",

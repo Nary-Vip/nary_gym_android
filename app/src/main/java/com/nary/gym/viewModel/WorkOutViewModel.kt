@@ -71,13 +71,14 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
         }
     }
 
-    fun delete(workOuts: WorkOuts){
+    fun delete(workOuts: WorkOuts, onFailure: () -> Unit = {}){
         viewModelScope.launch {
             errorMessage = null
             try {
                 repository.delete(workOuts)
             } catch (e: Exception) {
                 errorMessage = e.getErrorMessage()
+                onFailure()
             }
         }
     }

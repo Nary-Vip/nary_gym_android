@@ -98,10 +98,7 @@ fun LoginScreen(
                     Text("Log in")
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Text("Don't have an account?", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = onNavigateToCreateAccount) { Text("Sign up") }
-            }
+            AuthSwitchPrompt("Don't have an account?", "Sign up", onNavigateToCreateAccount)
         }
     }
 }

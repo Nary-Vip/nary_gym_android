@@ -108,4 +108,12 @@ class TodayContentTest {
         rule.onNodeWithText("Add a Leg workout").performClick()
         assertTrue(add)
     }
+
+    @Test
+    fun syncing_withNoExercisesYet_showsLoadingInsteadOfEmptyState() {
+        show(base.copy(exercises = emptyList(), syncing = true))
+        scrollTo("Loading workouts…")
+        rule.onNodeWithText("Loading workouts…").assertExists()
+        rule.onNodeWithText("Add a Leg workout").assertDoesNotExist()
+    }
 }

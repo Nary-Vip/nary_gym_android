@@ -30,11 +30,18 @@ class WorkoutsContentTest {
     private val lunge = WorkOuts(id = "2", workOutName = "Lunge", workOutType = WorkOutType.LEG, workOutImage = "")
     private val bench = WorkOuts(id = "3", workOutName = "Bench press", workOutType = WorkOutType.CHEST, workOutImage = "")
     private val deleted = mutableListOf<WorkOuts>()
+    private var failDeletes = false
+    private val recordDelete: (WorkOuts, () -> Unit) -> Unit = { workout, onFailed ->
+        deleted += workout
+        if (failDeletes) onFailed()
+    }
 
-    private fun show(workouts: List<WorkOuts> = listOf(squat, lunge, bench)) {
+    private fun show(workouts: List<WorkOuts> = listOf(squat, lunge, bench), isLoading: Boolean = false) {
         rule.setContent {
             NaryToDoTheme {
-                WorkoutsContent(workouts, PaddingValues(), onAdd = {}, onEdit = {}, onDelete = { deleted += it })
+                WorkoutsContent(
+                    workouts, PaddingValues(), onAdd = {}, onEdit = {}, onDelete = recordDelete, isLoading = isLoading,
+                )
             }
         }
     }
@@ -48,7 +55,7 @@ class WorkoutsContentTest {
         show()
         rule.onNodeWithText("LEG · 2").assertExists()
         rule.onNodeWithText("CHEST · 1").assertExists()
-        rule.onNodeWithTag("filter_CHEST").performClick() // "Chest" text also appears in rows
+        rule.onNodeWithTag("filter_CHEST").performClick()
         rule.onNodeWithText("Bench press").assertExists()
         rule.onNodeWithText("Squat").assertDoesNotExist()
     }
@@ -73,7 +80,7 @@ class WorkoutsContentTest {
         swipeAway("Squat")
         rule.mainClock.advanceTimeBy(1_000)
         rule.onNodeWithText("Squat").assertDoesNotExist()
-        rule.mainClock.advanceTimeBy(6_000) // Short snackbar = 4 s
+        rule.mainClock.advanceTimeBy(6_000) 
         assertEquals(listOf(squat), deleted)
     }
 
@@ -85,11 +92,11 @@ class WorkoutsContentTest {
         rule.mainClock.advanceTimeBy(1_000)
         swipeAway("Lunge")
         rule.mainClock.advanceTimeBy(1_000)
-        assertEquals(listOf(squat), deleted)           // first committed immediately
+        assertEquals(listOf(squat), deleted) 
         rule.onNodeWithText("Deleted Lunge").assertExists()
         rule.onNodeWithText("Undo").performClick()
         rule.mainClock.advanceTimeBy(10_000)
-        assertEquals(listOf(squat), deleted)           // second undone
+        assertEquals(listOf(squat), deleted) 
     }
 
     @Test
@@ -97,7 +104,7 @@ class WorkoutsContentTest {
         var visible by mutableStateOf(true)
         rule.setContent {
             NaryToDoTheme {
-                if (visible) WorkoutsContent(listOf(squat, bench), PaddingValues(), {}, {}, { deleted += it })
+                if (visible) WorkoutsContent(listOf(squat, bench), PaddingValues(), {}, {}, recordDelete)
             }
         }
         rule.mainClock.autoAdvance = false
@@ -106,5 +113,24 @@ class WorkoutsContentTest {
         visible = false
         rule.mainClock.advanceTimeBy(500)
         assertEquals(listOf(squat), deleted)
+    }
+
+    @Test
+    fun loading_withNoWorkoutsYet_showsLoadingInsteadOfEmptyState() {
+        show(workouts = emptyList(), isLoading = true)
+        rule.onNodeWithText("Loading workouts…").assertExists()
+        rule.onNodeWithText("No workouts yet").assertDoesNotExist()
+    }
+
+    @Test
+    fun failedDelete_bringsTheRowBack() {
+        failDeletes = true
+        show()
+        rule.mainClock.autoAdvance = false
+        swipeAway("Squat")
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.mainClock.advanceTimeBy(6_000)
+        assertEquals(listOf(squat), deleted)
+        rule.onNodeWithText("Squat").assertExists()
     }
 }
