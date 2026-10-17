@@ -5,20 +5,22 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -26,9 +28,10 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,41 +39,30 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.nary.gym.ui.common_widgets.PasswordField
-import com.nary.gym.ui.common_widgets.ProfileField
-import com.nary.gym.ui.theme.Accent
-import com.nary.gym.ui.theme.CardBg
-import com.nary.gym.ui.theme.LabelColor
-import com.nary.gym.ui.theme.Primary
+import com.nary.gym.ui.components.NaryPasswordField
+import com.nary.gym.ui.components.NaryTextField
 import com.nary.gym.ui.viewmodel.CreateAccountUiState
 import com.nary.gym.ui.viewmodel.CreateAccountViewModel
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @Composable
 fun CreateAccountScreen(
     onNavigateToLogin: () -> Unit,
     onAccountCreated: () -> Unit,
-    viewModel : CreateAccountViewModel = hiltViewModel()
+    viewModel: CreateAccountViewModel = hiltViewModel()
 ) {
-
     val formState = viewModel.formState
     val uiState = viewModel.uiState
     val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        viewModel.onProfileImageSelected(uri)
-    }
+    ) { uri: Uri? -> viewModel.onProfileImageSelected(uri) }
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -79,201 +71,82 @@ fun CreateAccountScreen(
                 viewModel.resetUiState()
                 onAccountCreated()
             }
-
             is CreateAccountUiState.Error -> {
-                Toast.makeText(
-                    context,
-                    (uiState as CreateAccountUiState.Error).message,
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(context, uiState.message, Toast.LENGTH_LONG).show()
                 viewModel.resetUiState()
             }
-
             else -> Unit
         }
     }
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .background(CardBg)
+            .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
+            .imePadding()
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Primary, Color(0xFF16213E))
-                    )
-                )
-                .padding(top = 56.dp, bottom = 48.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "NARY GYM",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 4.sp,
-                    color = Accent
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Create Account",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(24.dp))
+        AuthHeader(title = "Create account", subtitle = "Set up Nary Gym and start your rotation") {
+            Spacer(Modifier.height(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Box(
-                        modifier = Modifier
-                            .size(100.dp)
+                        Modifier
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .border(2.dp, Accent, CircleShape)
-                            .background(Color(0xFF2A2A4A)),
-                        contentAlignment = Alignment.Center
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center,
                     ) {
-                        if (viewModel.formState.profileImageUri != null) {
+                        if (formState.profileImageUri != null) {
                             AsyncImage(
-                                model = viewModel.formState.profileImageUri,
+                                model = formState.profileImageUri,
                                 contentDescription = "Profile photo",
+                                contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
                             )
                         } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile placeholder",
-                                tint = Color(0xFF5A5A8A),
-                                modifier = Modifier.size(48.dp)
-                            )
+                            Icon(Icons.Filled.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .background(Accent)
-                            .clickable { imagePickerLauncher.launch("image/*") },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Pick image",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    FilledIconButton(onClick = { imagePickerLauncher.launch("image/*") }, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Add profile photo", modifier = Modifier.size(14.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Upload a profile picture",
-                    fontSize = 12.sp,
-                    color = Color(0xFF9090BB)
-                )
+                Spacer(Modifier.width(12.dp))
+                Text("Add a profile photo (optional)", style = MaterialTheme.typography.bodyMedium)
             }
         }
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-
-            Text(
-                text = "Account Info",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = LabelColor,
-                letterSpacing = 1.sp,
-            )
-
-            ProfileField(
-                label = "Full Name",
-                value = viewModel.formState.name,
-                onValueChange = viewModel::onNameChange,
-                icon = Icons.Default.Person,
-                placeholder = "Enter your name",
-                keyboardType = KeyboardType.Text,
-                error = formState.nameError,
-            )
-
-            ProfileField(
-                label = "Email",
-                value = viewModel.formState.email,
-                onValueChange = viewModel::onEmailChange,
-                icon = Icons.Default.Email,
-                placeholder = "you@example.com",
-                keyboardType = KeyboardType.Email,
-                error = formState.emailError,
-            )
-
-            ProfileField(
-                label = "Phone Number",
-                value = viewModel.formState.phone,
-                onValueChange = viewModel::onPhoneChange,
-                icon = Icons.Default.Phone,
-                placeholder = "+91 00000 00000",
-                keyboardType = KeyboardType.Phone,
-                error = formState.phoneError,
-            )
-
-            PasswordField(
-                label = "Password",
-                placeholder = "Password@123",
-                value = viewModel.formState.password,
+            NaryTextField(formState.name, viewModel::onNameChange, "Full name", Icons.Filled.Person, error = formState.nameError)
+            NaryTextField(formState.email, viewModel::onEmailChange, "Email", Icons.Filled.Email, keyboardType = KeyboardType.Email, error = formState.emailError, placeholder = "you@example.com")
+            NaryTextField(formState.phone, viewModel::onPhoneChange, "Phone number", Icons.Filled.Phone, keyboardType = KeyboardType.Phone, error = formState.phoneError)
+            NaryPasswordField(
+                value = formState.password,
                 onValueChange = viewModel::onPasswordChange,
-                passwordVisible = viewModel.formState.passwordVisible,
-                onPasswordVisibleChange = viewModel::onTogglePasswordVisibility,
+                label = "Password",
+                visible = formState.passwordVisible,
+                onToggleVisible = viewModel::onTogglePasswordVisibility,
                 error = formState.passwordError,
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = viewModel::onSubmit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary),
-                enabled = uiState !is CreateAccountUiState.Loading
+                enabled = uiState !is CreateAccountUiState.Loading,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             ) {
                 if (uiState is CreateAccountUiState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text(
-                        text = "Create Account",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        color = Color.White
-                    )
+                    Text("Create account")
                 }
             }
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                TextButton(onClick = { onNavigateToLogin()}) {
-                    Text(
-                        text = "Already have an account? ",
-                        color = LabelColor,
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        text = "Log In",
-                        color = Accent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Text("Already have an account?", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onNavigateToLogin) { Text("Log in") }
             }
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
