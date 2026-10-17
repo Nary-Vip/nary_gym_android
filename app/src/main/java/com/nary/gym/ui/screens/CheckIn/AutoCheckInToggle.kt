@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,21 +25,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.nary.gym.checkin.LocationPermissionStep
 import com.nary.gym.checkin.currentLocationPermissionStep
 import com.nary.gym.checkin.needsNotificationPermission
-import com.nary.gym.ui.theme.Accent
-import com.nary.gym.ui.theme.LabelColor
-import com.nary.gym.ui.theme.TextColor
 
-/**
- * Auto check-in switch plus the permission ladder: fine+coarse → (API 29+) background.
- * On API 30+ the background request opens the system Settings page, so the step is
- * re-read on every resume to notice the user coming back. Once enabled it also asks for
- * notifications (API 33+) - optional, but without them check-ins are silent and have no Undo.
- */
 @Composable
 fun AutoCheckInToggle(
     enabled: Boolean,
@@ -72,13 +63,10 @@ fun AutoCheckInToggle(
         step = context.currentLocationPermissionStep()
         if (step == LocationPermissionStep.REQUEST_BACKGROUND) showBackgroundRationale = true
     }
-
-    // Finish enabling once every permission is in place, possibly after returning from Settings.
     LaunchedEffect(step, pendingEnable) {
         if (pendingEnable && step == LocationPermissionStep.GRANTED) {
             pendingEnable = false
             onEnable()
-            // Optional last step: auto check-in works either way, but only visibly with this.
             if (needsNotifications && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -100,10 +88,10 @@ fun AutoCheckInToggle(
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Auto check-in", color = TextColor, fontSize = 16.sp)
+                Text("Auto check-in", style = MaterialTheme.typography.titleMedium)
                 Text(
                     if (gymIsSet) "Check in when you arrive, out when you leave" else "Set your gym location first",
-                    color = LabelColor, fontSize = 13.sp
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Switch(
@@ -119,19 +107,18 @@ fun AutoCheckInToggle(
         }
 
         if (enabled && step != LocationPermissionStep.GRANTED) {
-            Text("Auto check-in is paused: location permission is missing.", color = Accent, fontSize = 13.sp)
+            Text("Auto check-in is paused: location permission is missing.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = { advance() }) { Text("Fix permissions") }
         }
         if (enabled && step == LocationPermissionStep.GRANTED && needsNotifications) {
             Text(
                 "Notifications are off: you won't see check-ins or be able to undo them.",
-                color = LabelColor, fontSize = 13.sp
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            // Opens settings rather than re-requesting: Android stops showing the dialog after a denial.
             TextButton(onClick = { openNotificationSettings(context) }) { Text("Allow notifications") }
         }
         if (step == LocationPermissionStep.NEED_PRECISE) {
-            Text("Auto check-in needs Precise location, not Approximate.", color = LabelColor, fontSize = 13.sp)
+            Text("Auto check-in needs Precise location, not Approximate.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = { openAppSettings(context) }) { Text("Open app settings") }
         }
     }
