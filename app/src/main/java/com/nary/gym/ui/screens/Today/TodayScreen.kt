@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,6 +98,8 @@ fun TodayScreen(
             value = System.currentTimeMillis()
         }
     }
+
+    RefreshOnNewDay(now, ZoneId.systemDefault(), viewModel::refresh)
 
     TodayContent(
         state = state,
@@ -249,6 +252,19 @@ private fun RotationProgress(dayNumber: Int, dayCount: Int, completed: Boolean) 
                     .clip(CircleShape)
                     .background(on.copy(alpha = alpha)),
             )
+        }
+    }
+}
+
+@Composable
+fun RefreshOnNewDay(now: Long, zone: ZoneId, onNewDay: () -> Unit) {
+    val day = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val currentOnNewDay by rememberUpdatedState(onNewDay)
+    var lastDay by remember { mutableStateOf(day) }
+    LaunchedEffect(day) {
+        if (day != lastDay) {
+            lastDay = day
+            currentOnNewDay()
         }
     }
 }

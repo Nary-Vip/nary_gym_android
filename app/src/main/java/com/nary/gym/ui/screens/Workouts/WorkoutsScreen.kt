@@ -50,6 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.nary.gym.core.WorkOutType
@@ -131,8 +134,8 @@ fun WorkoutsContent(
             actionLabel = "Undo",
             duration = SnackbarDuration.Short,
         )
-        if (result == SnackbarResult.Dismissed) commit(workout)
-        pendingDelete = null
+        if (result == SnackbarResult.Dismissed && workout.id !in committedIds) commit(workout)
+        if (pendingDelete?.id == workout.id) pendingDelete = null
     }
 
     val visible = workouts.filter { it.id != pendingDelete?.id && it.id !in committedIds }
@@ -234,12 +237,18 @@ private fun SwipeToDeleteRow(workout: WorkOuts, onSwiped: () -> Unit, onClick: (
             ) {
                 Icon(
                     Icons.Filled.Delete,
-                    contentDescription = "Delete ${workout.workOutName}",
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
         },
     ) {
-        WorkoutListItem(workout, onClick = onClick)
+        WorkoutListItem(
+            workout,
+            onClick = onClick,
+            modifier = Modifier.semantics {
+                customActions = listOf(CustomAccessibilityAction("Delete") { onSwiped(); true })
+            },
+        )
     }
 }

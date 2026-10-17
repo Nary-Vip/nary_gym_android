@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -132,5 +136,16 @@ class WorkoutsContentTest {
         rule.mainClock.advanceTimeBy(6_000)
         assertEquals(listOf(squat), deleted)
         rule.onNodeWithText("Squat").assertExists()
+    }
+
+    @Test
+    fun rows_offerDeleteAsAnAccessibilityAction_insteadOfAHiddenIcon() {
+        show()
+        rule.onNodeWithContentDescription("Delete Squat").assertDoesNotExist()
+        val actions = rule.onNode(hasText("Squat") and hasClickAction())
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        val delete = actions.single { it.label == "Delete" }
+        rule.runOnIdle { delete.action() }
+        rule.onNodeWithText("Deleted Squat").assertExists()
     }
 }

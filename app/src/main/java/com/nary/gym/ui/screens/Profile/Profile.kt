@@ -181,6 +181,17 @@ fun ProfileScreen(
         }
     }
 
+    val setUpReminder = {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else if (checkExactAlarmPermission()) {
+            showTimePicker()
+        }
+    }
+
     ProfileContent(
         user = user,
         name = name,
@@ -197,21 +208,14 @@ fun ProfileScreen(
         onSave = { profileViewModel.updateProfile(name, phone, profileImageUri) },
         onRemindersToggled = { enabled ->
             if (enabled) {
-                val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                    PackageManager.PERMISSION_GRANTED
-                if (needsPermission) {
-                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else if (checkExactAlarmPermission()) {
-                    showTimePicker()
-                }
+                setUpReminder()
             } else {
                 profileViewModel.toggleNotifications(false)
                 AlarmScheduler.cancelDailyAlarm(context)
                 Toast.makeText(context, "Reminders cancelled", Toast.LENGTH_SHORT).show()
             }
         },
-        onReminderTimeClick = { if (checkExactAlarmPermission()) showTimePicker() },
+        onReminderTimeClick = setUpReminder,
         onLogout = profileViewModel::logout,
     )
 }

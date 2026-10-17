@@ -217,7 +217,7 @@ fun CheckInContent(
                             style = MaterialTheme.typography.labelLarge,
                             modifier = Modifier.padding(start = 16.dp, top = 12.dp),
                         )
-                        Row(
+                        FlowRow(
                             Modifier.padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {

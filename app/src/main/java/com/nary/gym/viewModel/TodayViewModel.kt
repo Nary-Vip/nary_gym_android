@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 
 data class TodayUiState(
@@ -46,7 +47,7 @@ data class TodayUiState(
     val syncing: Boolean = false,
 )
 
-private data class CycleSnapshot(val current: WorkOutType, val completedToday: Boolean)
+private data class CycleSnapshot(val current: WorkOutType, val completedToday: Boolean, val date: LocalDate)
 
 @HiltViewModel
 class TodayViewModel @Inject constructor(
@@ -133,7 +134,7 @@ class TodayViewModel @Inject constructor(
         message = null
     }
 
-    private fun snapshot() = CycleSnapshot(workoutCycle.getCurrentDayWorkout(), workoutCycle.hasCompletedToday())
+    private fun snapshot() = CycleSnapshot(workoutCycle.getCurrentDayWorkout(), workoutCycle.hasCompletedToday(), LocalDate.now(clock))
 
     private fun isAutoCheckInReady() =
         gymLocationStore.isAutoCheckInEnabled() && gymLocationStore.getGym() != null

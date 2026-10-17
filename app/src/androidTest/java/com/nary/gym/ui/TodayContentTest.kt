@@ -17,6 +17,12 @@ import com.nary.gym.ui.screens.Today.TODAY_LIST_TAG
 import com.nary.gym.ui.theme.NaryToDoTheme
 import com.nary.gym.viewModel.TodayUiState
 import org.junit.Assert.assertTrue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.nary.gym.ui.screens.Today.RefreshOnNewDay
+import java.time.LocalDateTime
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -115,5 +121,16 @@ class TodayContentTest {
         scrollTo("Loading workouts…")
         rule.onNodeWithText("Loading workouts…").assertExists()
         rule.onNodeWithText("Add a Leg workout").assertDoesNotExist()
+    }
+
+    @Test
+    fun newDay_triggersRefresh_butMinuteTicksDoNot() {
+        var clockNow by mutableStateOf(LocalDateTime.of(2026, 10, 17, 23, 58).toInstant(ZoneOffset.UTC).toEpochMilli())
+        var refreshes = 0
+        rule.setContent { RefreshOnNewDay(clockNow, ZoneOffset.UTC) { refreshes++ } }
+        rule.runOnIdle { clockNow += 60_000 }
+        rule.runOnIdle { assertEquals(0, refreshes) }
+        rule.runOnIdle { clockNow += 2 * 60_000 }
+        rule.runOnIdle { assertEquals(1, refreshes) }
     }
 }

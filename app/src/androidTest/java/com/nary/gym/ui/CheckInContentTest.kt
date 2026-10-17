@@ -1,6 +1,12 @@
 package com.nary.gym.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -55,8 +61,9 @@ class CheckInContentTest {
         onCheckOut: () -> Unit = {},
         onDeleteVisit: (String) -> Unit = {},
         fontScale: Float = 1f,
+        width: Dp = Dp.Unspecified,
     ) = rule.setContent {
-        WithFontScale(fontScale) { NaryToDoTheme {
+        WithFontScale(fontScale) { NaryToDoTheme { Box(if (width.isSpecified) Modifier.width(width) else Modifier) {
             CheckInContent(
                 visits = visits,
                 openVisit = openVisit,
@@ -74,7 +81,7 @@ class CheckInContentTest {
                 onDisableAutoCheckIn = {},
                 onDeleteVisit = onDeleteVisit,
             )
-        } }
+        } } }
     }
 
     private fun scrollTo(matcher: SemanticsMatcher) =
@@ -94,6 +101,15 @@ class CheckInContentTest {
         show(openVisit = open, fontScale = 2f)
         listOf("Checked in", "Since ${formatClockTime(open.checkInAt, zone)} · 38m").forEach { text ->
             assertEquals(text, emptyList<String>(), rule.onNodeWithText(text).textLayout().linesBrokenInsideAWord())
+        }
+    }
+
+    @Test
+    fun radiusChips_atDoubleFontSizeOnANarrowPhone_keepLabelsOnOneLine() {
+        show(fontScale = 2f, width = 360.dp)
+        listOf("100 m", "150 m", "250 m").forEach { label ->
+            scrollTo(hasText(label))
+            assertEquals(label, 1, rule.onNode(hasText(label), useUnmergedTree = true).textLayout().lineCount)
         }
     }
 
