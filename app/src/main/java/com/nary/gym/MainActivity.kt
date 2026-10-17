@@ -2,10 +2,8 @@ package com.nary.gym
 
 import android.app.NotificationManager
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -26,9 +24,6 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var tokenManager: TokenManager
 
-    // Exposed as Compose state so screens react to a new intent (notification tap, deep link,
-    // widget tap) even when the Activity is already running - onNewIntent's setIntent() alone
-    // is a plain field mutation that Compose has no way to observe.
     private var currentIntent by mutableStateOf<Intent?>(null)
 
     override fun onNewIntent(intent: Intent) {
@@ -42,7 +37,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
 
-        enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
+        enableEdgeToEdge()
         val launchedFromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
         currentIntent = if (savedInstanceState == null && !launchedFromHistory) intent else null
         handleNotificationIntent(intent)
