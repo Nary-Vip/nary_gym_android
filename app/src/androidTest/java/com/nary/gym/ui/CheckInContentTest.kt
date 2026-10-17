@@ -54,8 +54,9 @@ class CheckInContentTest {
         onCheckIn: () -> Unit = {},
         onCheckOut: () -> Unit = {},
         onDeleteVisit: (String) -> Unit = {},
+        fontScale: Float = 1f,
     ) = rule.setContent {
-        NaryToDoTheme {
+        WithFontScale(fontScale) { NaryToDoTheme {
             CheckInContent(
                 visits = visits,
                 openVisit = openVisit,
@@ -73,11 +74,28 @@ class CheckInContentTest {
                 onDisableAutoCheckIn = {},
                 onDeleteVisit = onDeleteVisit,
             )
-        }
+        } }
     }
 
     private fun scrollTo(matcher: SemanticsMatcher) =
         rule.onNodeWithTag(CHECK_IN_LIST_TAG).performScrollToNode(matcher)
+
+    @Test
+    fun statusCard_atDoubleFontSize_doesNotBreakWords() {
+        show(fontScale = 2f)
+        listOf("Not at the gym", "Check in yourself, or let auto check-in do it.").forEach { text ->
+            assertEquals(text, emptyList<String>(), rule.onNodeWithText(text).textLayout().linesBrokenInsideAWord())
+        }
+    }
+
+    @Test
+    fun liveCard_atDoubleFontSize_doesNotBreakWords() {
+        val open = GymVisit(id = "o", checkInAt = now - Duration.ofMinutes(38).toMillis(), source = VisitSource.AUTO)
+        show(openVisit = open, fontScale = 2f)
+        listOf("Checked in", "Since ${formatClockTime(open.checkInAt, zone)} · 38m").forEach { text ->
+            assertEquals(text, emptyList<String>(), rule.onNodeWithText(text).textLayout().linesBrokenInsideAWord())
+        }
+    }
 
     @Test
     fun notCheckedIn_offersCheckInNow() {

@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -52,7 +53,7 @@ fun MainShell(
                         selected = selected,
                         onClick = { tabNavController.navigateToTab(tab) },
                         icon = { Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null) },
-                        label = { Text(tab.label) },
+                        label = { Text(tab.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                             selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
