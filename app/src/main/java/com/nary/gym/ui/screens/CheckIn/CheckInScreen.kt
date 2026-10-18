@@ -1,5 +1,7 @@
 package com.nary.gym.ui.screens.CheckIn
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.animateContentSize
 import android.Manifest
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -162,36 +164,38 @@ fun CheckInContent(
         }
 
         item {
-            if (openVisit != null) {
-                LiveStatusCard(
-                    title = "Checked in",
-                    detail = "Since ${formatClockTime(openVisit.checkInAt, zone)} · ${formatDuration(now - openVisit.checkInAt)}",
-                    actionLabel = "Check out",
-                    onAction = {
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                        onCheckOut()
-                    },
-                )
-            } else {
-                Card(shape = MaterialTheme.shapes.medium, colors = cardColors) {
-                    FlowRow(
-                        Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        itemVerticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
-                            Text("Not at the gym", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "Check in yourself, or let auto check-in do it.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        FilledTonalButton(onClick = {
+            Box(Modifier.animateContentSize()) {
+                if (openVisit != null) {
+                    LiveStatusCard(
+                        title = "Checked in",
+                        detail = "Since ${formatClockTime(openVisit.checkInAt, zone)} · ${formatDuration(now - openVisit.checkInAt)}",
+                        actionLabel = "Check out",
+                        onAction = {
                             haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                            onCheckIn()
-                        }) { Text("Check in now") }
+                            onCheckOut()
+                        },
+                    )
+                } else {
+                    Card(shape = MaterialTheme.shapes.medium, colors = cardColors) {
+                        FlowRow(
+                            Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            itemVerticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f).widthIn(min = 160.dp)) {
+                                Text("Not at the gym", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "Check in yourself, or let auto check-in do it.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            FilledTonalButton(onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                                onCheckIn()
+                            }) { Text("Check in now") }
+                        }
                     }
                 }
             }

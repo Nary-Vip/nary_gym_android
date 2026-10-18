@@ -1,5 +1,12 @@
 package com.nary.gym.ui.screens.Today
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.AnimatedContent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -166,8 +173,9 @@ fun TodayContent(
         }
         val open = state.openVisit
         if (open != null) {
-            item {
+            item(key = "live") {
                 LiveStatusCard(
+                    modifier = Modifier.animateItem(),
                     title = "Checked in",
                     detail = "Since ${formatClockTime(open.checkInAt, zone)} · ${formatDuration(now - open.checkInAt)}",
                     actionLabel = "Check out",
@@ -178,7 +186,7 @@ fun TodayContent(
                 )
             }
         } else if (!state.autoCheckInReady) {
-            item { TextButton(onClick = onSetUpCheckIn) { Text("Set up auto check-in") } }
+            item(key = "setup") { TextButton(onClick = onSetUpCheckIn, modifier = Modifier.animateItem()) { Text("Set up auto check-in") } }
         }
         item { SectionHeader("Today's exercises", count = state.exercises.size) }
         if (state.exercises.isEmpty() && state.syncing) {
@@ -215,33 +223,42 @@ private fun DayHero(state: TodayUiState, onMarkComplete: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             RotationProgress(state.dayNumber, state.dayCount, state.completedToday)
             Spacer(Modifier.height(16.dp))
-            if (state.completedToday) {
-                Text("Done for today 💪", style = MaterialTheme.typography.titleLarge)
-                Text("Next up: ${state.nextUp.title}", style = MaterialTheme.typography.bodyLarge)
-            } else {
-                Text("Work hard babe", style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(12.dp))
-                Button(
-                    onClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                        onMarkComplete()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        contentColor = MaterialTheme.colorScheme.primaryContainer,
-                    ),
-                ) {
-                    Icon(Icons.Filled.Check, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Mark as complete")
+            AnimatedContent(
+                targetState = state.completedToday,
+                transitionSpec = {
+                    (fadeIn(tween(210, delayMillis = 90)) togetherWith fadeOut(tween(90))).using(SizeTransform(clip = false))
+                },
+                label = "hero",
+            ) { completed ->
+                Column {
+                    if (completed) {
+                        Text("Done for today 💪", style = MaterialTheme.typography.titleLarge)
+                        Text("Next up: ${state.nextUp.title}", style = MaterialTheme.typography.bodyLarge)
+                    } else {
+                        Text("Work hard babe", style = MaterialTheme.typography.bodyLarge)
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                                onMarkComplete()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                contentColor = MaterialTheme.colorScheme.primaryContainer,
+                            ),
+                        ) {
+                            Icon(Icons.Filled.Check, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Mark as complete")
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/** One segment per rotation day; segments before today are filled, today's fills once done. */
 @Composable
 private fun RotationProgress(dayNumber: Int, dayCount: Int, completed: Boolean) {
     val on = MaterialTheme.colorScheme.onPrimaryContainer
@@ -250,11 +267,15 @@ private fun RotationProgress(dayNumber: Int, dayCount: Int, completed: Boolean) 
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         repeat(dayCount) { index ->
-            val alpha = when {
-                index < dayNumber - 1 -> 1f
-                index == dayNumber - 1 -> if (completed) 1f else 0.5f
-                else -> 0.2f
-            }
+            val alpha by animateFloatAsState(
+                targetValue = when {
+                    index < dayNumber - 1 -> 1f
+                    index == dayNumber - 1 -> if (completed) 1f else 0.5f
+                    else -> 0.2f
+                },
+                animationSpec = tween(400),
+                label = "segment",
+            )
             Box(
                 Modifier
                     .weight(1f)

@@ -1,5 +1,9 @@
 package com.nary.gym.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,7 +67,14 @@ fun MainShell(
             }
         },
     ) { padding ->
-        NavHost(navController = tabNavController, startDestination = TodayRoute) {
+        NavHost(
+            navController = tabNavController,
+            startDestination = TodayRoute,
+            enterTransition = { fadeIn(tween(210, delayMillis = 90)) + scaleIn(tween(210, delayMillis = 90), initialScale = 0.92f) },
+            exitTransition = { fadeOut(tween(90)) },
+            popEnterTransition = { fadeIn(tween(210, delayMillis = 90)) + scaleIn(tween(210, delayMillis = 90), initialScale = 0.92f) },
+            popExitTransition = { fadeOut(tween(90)) },
+        ) {
             composable<TodayRoute> { tabContent(Tab.TODAY, padding) }
             composable<WorkoutsRoute> { tabContent(Tab.WORKOUTS, padding) }
             composable<CheckInsRoute> { tabContent(Tab.CHECK_INS, padding) }
