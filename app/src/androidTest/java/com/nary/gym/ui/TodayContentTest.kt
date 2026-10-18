@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import com.nary.gym.ui.screens.Today.RefreshOnNewDay
 import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,6 +37,7 @@ class TodayContentTest {
     val rule = createComposeRule()
 
     private val now = 1_790_000_000_000L
+    private val haptics = RecordingHaptics()
     private val squat = WorkOuts(id = "1", workOutName = "Squat", workOutType = WorkOutType.LEG, workOutImage = "")
     private val base = TodayUiState(
         dayType = WorkOutType.LEG, dayNumber = 1, dayCount = 4, completedToday = false,
@@ -50,7 +52,7 @@ class TodayContentTest {
         onSetUp: () -> Unit = {},
         onAdd: () -> Unit = {},
     ) = rule.setContent {
-        NaryToDoTheme {
+        NaryToDoThemeWithHaptics(haptics) {
             TodayContent(
                 state = state, now = now, contentPadding = PaddingValues(),
                 onMarkComplete = onMarkComplete, onCheckOut = onCheckOut, onSetUpCheckIn = onSetUp,
@@ -132,5 +134,20 @@ class TodayContentTest {
         rule.runOnIdle { assertEquals(0, refreshes) }
         rule.runOnIdle { clockNow += 2 * 60_000 }
         rule.runOnIdle { assertEquals(1, refreshes) }
+    }
+
+    @Test
+    fun markComplete_confirmsWithHaptics() {
+        show(base)
+        rule.onNodeWithText("Mark as complete").performClick()
+        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
+    }
+
+    @Test
+    fun checkOut_confirmsWithHaptics() {
+        show(base.copy(openVisit = GymVisit(checkInAt = now - 60_000, source = VisitSource.AUTO)))
+        scrollTo("Check out")
+        rule.onNodeWithText("Check out").performClick()
+        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
     }
 }

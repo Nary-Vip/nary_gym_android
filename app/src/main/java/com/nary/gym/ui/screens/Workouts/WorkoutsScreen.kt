@@ -49,6 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -223,6 +225,12 @@ fun WorkoutsContent(
 private fun SwipeToDeleteRow(workout: WorkOuts, onSwiped: () -> Unit, onClick: () -> Unit) {
     val positionalThreshold = SwipeToDismissBoxDefaults.positionalThreshold
     val state = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, positionalThreshold) }
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(state.targetValue) {
+        if (state.targetValue == SwipeToDismissBoxValue.EndToStart) {
+            haptics.performHapticFeedback(HapticFeedbackType.ContextClick)
+        }
+    }
     SwipeToDismissBox(
         state = state,
         enableDismissFromStartToEnd = false,

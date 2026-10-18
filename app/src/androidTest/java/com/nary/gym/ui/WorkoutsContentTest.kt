@@ -20,6 +20,8 @@ import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.screens.Workouts.WorkoutsContent
 import com.nary.gym.ui.theme.NaryToDoTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,6 +36,7 @@ class WorkoutsContentTest {
     private val lunge = WorkOuts(id = "2", workOutName = "Lunge", workOutType = WorkOutType.LEG, workOutImage = "")
     private val bench = WorkOuts(id = "3", workOutName = "Bench press", workOutType = WorkOutType.CHEST, workOutImage = "")
     private val deleted = mutableListOf<WorkOuts>()
+    private val haptics = RecordingHaptics()
     private var failDeletes = false
     private val recordDelete: (WorkOuts, () -> Unit) -> Unit = { workout, onFailed ->
         deleted += workout
@@ -42,7 +45,7 @@ class WorkoutsContentTest {
 
     private fun show(workouts: List<WorkOuts> = listOf(squat, lunge, bench), isLoading: Boolean = false) {
         rule.setContent {
-            NaryToDoTheme {
+            NaryToDoThemeWithHaptics(haptics) {
                 WorkoutsContent(
                     workouts, PaddingValues(), onAdd = {}, onEdit = {}, onDelete = recordDelete, isLoading = isLoading,
                 )
@@ -107,7 +110,7 @@ class WorkoutsContentTest {
     fun leavingWithPendingDelete_commitsIt() {
         var visible by mutableStateOf(true)
         rule.setContent {
-            NaryToDoTheme {
+            NaryToDoThemeWithHaptics(haptics) {
                 if (visible) WorkoutsContent(listOf(squat, bench), PaddingValues(), {}, {}, recordDelete)
             }
         }
@@ -147,5 +150,12 @@ class WorkoutsContentTest {
         val delete = actions.single { it.label == "Delete" }
         rule.runOnIdle { delete.action() }
         rule.onNodeWithText("Deleted Squat").assertExists()
+    }
+
+    @Test
+    fun swipePastThreshold_givesContextClick() {
+        show()
+        swipeAway("Squat")
+        assertTrue(HapticFeedbackType.ContextClick in haptics.performed)
     }
 }

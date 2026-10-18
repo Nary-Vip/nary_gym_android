@@ -26,6 +26,7 @@ import com.nary.gym.utils.formatClockTime
 import com.nary.gym.utils.formatDayLabel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,6 +41,7 @@ class CheckInContentTest {
 
     private val zone = ZoneOffset.UTC
     private val now = 1_790_000_000_000L
+    private val haptics = RecordingHaptics()
     private val oneDay = Duration.ofDays(1).toMillis()
     private val today = GymVisit(
         id = "a",
@@ -63,7 +65,7 @@ class CheckInContentTest {
         fontScale: Float = 1f,
         width: Dp = Dp.Unspecified,
     ) = rule.setContent {
-        WithFontScale(fontScale) { NaryToDoTheme { Box(if (width.isSpecified) Modifier.width(width) else Modifier) {
+        WithFontScale(fontScale) { NaryToDoThemeWithHaptics(haptics) { Box(if (width.isSpecified) Modifier.width(width) else Modifier) {
             CheckInContent(
                 visits = visits,
                 openVisit = openVisit,
@@ -160,5 +162,19 @@ class CheckInContentTest {
         rule.onNode(deleteIcon).performClick()
         rule.onNodeWithText("Delete").performClick()
         assertEquals(listOf("a"), deleted)
+    }
+
+    @Test
+    fun checkInNow_confirmsWithHaptics() {
+        show()
+        rule.onNodeWithText("Check in now").performClick()
+        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
+    }
+
+    @Test
+    fun checkOut_confirmsWithHaptics() {
+        show(openVisit = GymVisit(id = "o", checkInAt = now - 60_000, source = VisitSource.AUTO))
+        rule.onNodeWithText("Check out").performClick()
+        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
     }
 }

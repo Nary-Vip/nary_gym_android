@@ -47,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -142,6 +144,7 @@ fun CheckInContent(
     onDisableAutoCheckIn: () -> Unit,
     onDeleteVisit: (String) -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
     var visitPendingDelete by remember { mutableStateOf<GymVisit?>(null) }
     val summary = weeklySummary(visits, Instant.ofEpochMilli(now), zone)
     val cardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -164,7 +167,10 @@ fun CheckInContent(
                     title = "Checked in",
                     detail = "Since ${formatClockTime(openVisit.checkInAt, zone)} · ${formatDuration(now - openVisit.checkInAt)}",
                     actionLabel = "Check out",
-                    onAction = onCheckOut,
+                    onAction = {
+                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onCheckOut()
+                    },
                 )
             } else {
                 Card(shape = MaterialTheme.shapes.medium, colors = cardColors) {
@@ -182,7 +188,10 @@ fun CheckInContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        FilledTonalButton(onClick = onCheckIn) { Text("Check in now") }
+                        FilledTonalButton(onClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                            onCheckIn()
+                        }) { Text("Check in now") }
                     }
                 }
             }

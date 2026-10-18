@@ -38,6 +38,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -142,6 +144,7 @@ fun TodayContent(
     onAddWorkout: () -> Unit,
     zone: ZoneId = ZoneId.systemDefault(),
 ) {
+    val haptics = LocalHapticFeedback.current
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(contentPadding).testTag(TODAY_LIST_TAG),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -168,7 +171,10 @@ fun TodayContent(
                     title = "Checked in",
                     detail = "Since ${formatClockTime(open.checkInAt, zone)} · ${formatDuration(now - open.checkInAt)}",
                     actionLabel = "Check out",
-                    onAction = onCheckOut,
+                    onAction = {
+                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onCheckOut()
+                    },
                 )
             }
         } else if (!state.autoCheckInReady) {
@@ -195,6 +201,7 @@ fun TodayContent(
 
 @Composable
 private fun DayHero(state: TodayUiState, onMarkComplete: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
     Card(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
@@ -215,7 +222,10 @@ private fun DayHero(state: TodayUiState, onMarkComplete: () -> Unit) {
                 Text("Work hard babe", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(12.dp))
                 Button(
-                    onClick = onMarkComplete,
+                    onClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onMarkComplete()
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
