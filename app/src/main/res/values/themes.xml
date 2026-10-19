@@ -4,13 +4,4 @@
     <style name="Theme.NaryToDo" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/nary_window_background</item>
     </style>
-
-    <style name="Theme.NaryToDo.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
-       <item name="appWidgetRadius">16dp</item>
-        <item name="appWidgetInnerRadius">8dp</item>
-    </style>
-
-    <style name="Theme.NaryToDo.AppWidgetContainer" parent="Theme.NaryToDo.AppWidgetContainerParent">
-       <item name="appWidgetPadding">16dp</item>
-    </style>
 </resources>
