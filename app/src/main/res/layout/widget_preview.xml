@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:text="@string/todayworkouttitle"
         android:textColor="@color/widget_on_container"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
     <TextView
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:text="@string/todayworkoutday"
         android:textColor="@color/widget_on_container"
-        android:textSize="18sp"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
@@ -34,7 +34,7 @@
         android:paddingVertical="6dp"
         android:text="@string/todayworkoutbutton"
         android:textColor="@color/widget_container"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
 </LinearLayout>

@@ -28,6 +28,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import org.junit.Rule
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Duration
@@ -64,6 +67,7 @@ class CheckInContentTest {
         onDeleteVisit: (String) -> Unit = {},
         fontScale: Float = 1f,
         width: Dp = Dp.Unspecified,
+        actionResults: Flow<Boolean> = emptyFlow(),
     ) = rule.setContent {
         WithFontScale(fontScale) { NaryToDoThemeWithHaptics(haptics) { Box(if (width.isSpecified) Modifier.width(width) else Modifier) {
             CheckInContent(
@@ -82,6 +86,7 @@ class CheckInContentTest {
                 onEnableAutoCheckIn = {},
                 onDisableAutoCheckIn = {},
                 onDeleteVisit = onDeleteVisit,
+                actionResults = actionResults,
             )
         } } }
     }
@@ -164,17 +169,23 @@ class CheckInContentTest {
         assertEquals(listOf("a"), deleted)
     }
 
+
+
     @Test
-    fun checkInNow_confirmsWithHaptics() {
-        show()
+    fun checkIn_buzzesConfirm_onlyOnceTheCheckInSucceeds() {
+        val results = MutableSharedFlow<Boolean>(extraBufferCapacity = 2)
+        show(actionResults = results)
         rule.onNodeWithText("Check in now").performClick()
-        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
+        rule.runOnIdle { assertEquals(emptyList<HapticFeedbackType>(), haptics.performed) }
+        rule.runOnIdle { results.tryEmit(true) }
+        rule.runOnIdle { assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed) }
     }
 
     @Test
-    fun checkOut_confirmsWithHaptics() {
-        show(openVisit = GymVisit(id = "o", checkInAt = now - 60_000, source = VisitSource.AUTO))
-        rule.onNodeWithText("Check out").performClick()
-        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
+    fun rejectedCheckInOrOut_buzzesReject() {
+        val results = MutableSharedFlow<Boolean>(extraBufferCapacity = 2)
+        show(actionResults = results)
+        rule.runOnIdle { results.tryEmit(false) }
+        rule.runOnIdle { assertEquals(listOf(HapticFeedbackType.Reject), haptics.performed) }
     }
 }

@@ -12,6 +12,9 @@ import androidx.glance.ButtonDefaults
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.appwidget.SizeMode
+import androidx.glance.LocalSize
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
@@ -40,35 +43,44 @@ import com.nary.gym.utils.rotationDay
 import com.nary.gym.utils.rotationDayUpdates
 
 class WorkoutWidget : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val cycle = WorkoutCycle(context)
         provideContent {
             val updates = remember { cycle.rotationDayUpdates() }
             val day by updates.collectAsState(initial = cycle.rotationDay())
-            GlanceTheme(colors = VoltWidgetColors) { WorkoutWidgetContent(day) }
+            val fontScale = LocalContext.current.resources.configuration.fontScale
+            GlanceTheme(colors = VoltWidgetColors) { WorkoutWidgetContent(day, fontScale) }
         }
     }
 }
 
 @Composable
-fun WorkoutWidgetContent(day: RotationDay) {
+fun WorkoutWidgetContent(day: RotationDay, fontScale: Float = 1f) {
     val onContainer = GlanceTheme.colors.onPrimaryContainer
+    val roomy = LocalSize.current.height >= 160.dp * fontScale.coerceAtLeast(1f)
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(16.dp)
             .background(GlanceTheme.colors.primaryContainer)
             .clickable(actionStartActivity<MainActivity>())
-            .padding(16.dp),
+            .padding(if (roomy) 16.dp else 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (day.completedToday) {
             Text("Done ✓", style = TextStyle(color = onContainer, fontSize = 20.sp, fontWeight = FontWeight.Bold))
             Text("Next: ${day.nextUp.title}", style = TextStyle(color = onContainer, fontSize = 14.sp))
         } else {
-            Text("TODAY", style = TextStyle(color = onContainer, fontSize = 11.sp, fontWeight = FontWeight.Medium))
-            Text("${day.dayType.title} Day", style = TextStyle(color = onContainer, fontSize = 20.sp, fontWeight = FontWeight.Bold))
-            Spacer(GlanceModifier.height(12.dp))
+            if (roomy) {
+                Text("TODAY", style = TextStyle(color = onContainer, fontSize = 11.sp, fontWeight = FontWeight.Medium))
+            }
+            Text(
+                "${day.dayType.title} Day",
+                style = TextStyle(color = onContainer, fontSize = if (roomy) 20.sp else 18.sp, fontWeight = FontWeight.Bold),
+            )
+            Spacer(GlanceModifier.height(if (roomy) 12.dp else 8.dp))
             Button(
                 text = "Mark complete",
                 onClick = actionRunCallback<CompleteWorkoutAction>(),

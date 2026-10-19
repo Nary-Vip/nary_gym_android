@@ -1,6 +1,8 @@
 package com.nary.gym
 
 import android.app.Application
+import com.nary.gym.widget.WorkoutWidget
+import androidx.glance.appwidget.updateAll
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.nary.gym.Notifications.AlarmScheduler
@@ -43,6 +45,11 @@ class NaryApplication : Application(), Configuration.Provider {
             .build()
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applicationScope.launch { WorkoutWidget().updateAll(this@NaryApplication) }
+    }
 
     override fun onCreate() {
         super.onCreate()

@@ -67,6 +67,8 @@ import com.nary.gym.viewModel.TodayUiState
 import com.nary.gym.viewModel.TodayViewModel
 import com.nary.gym.viewModel.WorkOutViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -119,6 +121,7 @@ fun TodayScreen(
         onSetUpCheckIn = onOpenCheckIns,
         onExerciseClick = { editing = it },
         onAddWorkout = { adding = true },
+        checkOutResults = viewModel.checkOutResults,
     )
 
     editing?.let { workout ->
@@ -150,8 +153,14 @@ fun TodayContent(
     onExerciseClick: (WorkOuts) -> Unit,
     onAddWorkout: () -> Unit,
     zone: ZoneId = ZoneId.systemDefault(),
+    checkOutResults: Flow<Boolean> = emptyFlow(),
 ) {
     val haptics = LocalHapticFeedback.current
+    LaunchedEffect(checkOutResults) {
+        checkOutResults.collect { succeeded ->
+            haptics.performHapticFeedback(if (succeeded) HapticFeedbackType.Confirm else HapticFeedbackType.Reject)
+        }
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(contentPadding).testTag(TODAY_LIST_TAG),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -179,10 +188,7 @@ fun TodayContent(
                     title = "Checked in",
                     detail = "Since ${formatClockTime(open.checkInAt, zone)} · ${formatDuration(now - open.checkInAt)}",
                     actionLabel = "Check out",
-                    onAction = {
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                        onCheckOut()
-                    },
+                    onAction = onCheckOut,
                 )
             }
         } else if (!state.autoCheckInReady) {

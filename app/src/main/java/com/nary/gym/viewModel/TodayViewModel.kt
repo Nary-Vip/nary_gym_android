@@ -22,6 +22,10 @@ import com.nary.gym.utils.weeklySummary
 import com.nary.gym.widget.WorkoutWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.CoroutineScope
+import com.nary.gym.di.ApplicationScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +62,7 @@ class TodayViewModel @Inject constructor(
     private val workoutCycle: WorkoutCycle,
     private val clock: Clock,
     @param:ApplicationContext private val appContext: Context,
+    @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val cycle = MutableStateFlow(snapshot())
@@ -66,6 +71,9 @@ class TodayViewModel @Inject constructor(
 
     var message by mutableStateOf<String?>(null)
         private set
+
+    private val _checkOutResults = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val checkOutResults: SharedFlow<Boolean> = _checkOutResults
 
     val uiState: StateFlow<TodayUiState> = combine(
         workOutRepository.getAllWorkouts(),
@@ -109,12 +117,14 @@ class TodayViewModel @Inject constructor(
     fun markComplete() {
         workoutCycle.moveToNextDayWorkOut()
         cycle.value = snapshot()
-        viewModelScope.launch { WorkoutWidget().updateAll(appContext) }
+        appScope.launch { WorkoutWidget().updateAll(appContext) }
     }
 
     fun checkOut() {
         viewModelScope.launch {
-            message = when (val result = gymVisitRepository.checkOut()) {
+            val result = gymVisitRepository.checkOut()
+            _checkOutResults.tryEmit(result !is CheckOutResult.NotCheckedIn)
+            message = when (result) {
                 is CheckOutResult.CheckedOut ->
                     "Checked out · ${formatDuration(result.visit.checkOutAt!! - result.visit.checkInAt)}"
                 CheckOutResult.Discarded -> "Visit under 5 minutes discarded"

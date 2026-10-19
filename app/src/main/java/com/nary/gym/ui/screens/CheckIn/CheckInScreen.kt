@@ -69,6 +69,8 @@ import com.nary.gym.utils.formatDuration
 import com.nary.gym.utils.weeklySummary
 import com.nary.gym.viewModel.CheckInViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
@@ -125,6 +127,7 @@ fun CheckInScreen(
         onEnableAutoCheckIn = viewModel::enableAutoCheckIn,
         onDisableAutoCheckIn = viewModel::disableAutoCheckIn,
         onDeleteVisit = viewModel::deleteVisit,
+        actionResults = viewModel.actionResults,
     )
 }
 
@@ -145,8 +148,14 @@ fun CheckInContent(
     onEnableAutoCheckIn: () -> Unit,
     onDisableAutoCheckIn: () -> Unit,
     onDeleteVisit: (String) -> Unit,
+    actionResults: Flow<Boolean> = emptyFlow(),
 ) {
     val haptics = LocalHapticFeedback.current
+    LaunchedEffect(actionResults) {
+        actionResults.collect { succeeded ->
+            haptics.performHapticFeedback(if (succeeded) HapticFeedbackType.Confirm else HapticFeedbackType.Reject)
+        }
+    }
     var visitPendingDelete by remember { mutableStateOf<GymVisit?>(null) }
     val summary = weeklySummary(visits, Instant.ofEpochMilli(now), zone)
     val cardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -170,10 +179,7 @@ fun CheckInContent(
                         title = "Checked in",
                         detail = "Since ${formatClockTime(openVisit.checkInAt, zone)} · ${formatDuration(now - openVisit.checkInAt)}",
                         actionLabel = "Check out",
-                        onAction = {
-                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                            onCheckOut()
-                        },
+                        onAction = onCheckOut,
                     )
                 } else {
                     Card(shape = MaterialTheme.shapes.medium, colors = cardColors) {
@@ -191,10 +197,7 @@ fun CheckInContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            FilledTonalButton(onClick = {
-                                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                                onCheckIn()
-                            }) { Text("Check in now") }
+                            FilledTonalButton(onClick = onCheckIn) { Text("Check in now") }
                         }
                     }
                 }

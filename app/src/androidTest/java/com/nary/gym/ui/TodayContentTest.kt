@@ -25,6 +25,9 @@ import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import org.junit.Rule
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Duration
@@ -51,12 +54,14 @@ class TodayContentTest {
         onCheckOut: () -> Unit = {},
         onSetUp: () -> Unit = {},
         onAdd: () -> Unit = {},
+        checkOutResults: Flow<Boolean> = emptyFlow(),
     ) = rule.setContent {
         NaryToDoThemeWithHaptics(haptics) {
             TodayContent(
                 state = state, now = now, contentPadding = PaddingValues(),
                 onMarkComplete = onMarkComplete, onCheckOut = onCheckOut, onSetUpCheckIn = onSetUp,
                 onExerciseClick = {}, onAddWorkout = onAdd, zone = ZoneOffset.UTC,
+                checkOutResults = checkOutResults,
             )
         }
     }
@@ -143,13 +148,6 @@ class TodayContentTest {
         assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
     }
 
-    @Test
-    fun checkOut_confirmsWithHaptics() {
-        show(base.copy(openVisit = GymVisit(checkInAt = now - 60_000, source = VisitSource.AUTO)))
-        scrollTo("Check out")
-        rule.onNodeWithText("Check out").performClick()
-        assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
-    }
 
     @Test
     fun initialState_beforeDataArrives_showsLoadingInsteadOfEmptyState() {
@@ -157,5 +155,16 @@ class TodayContentTest {
         scrollTo("Loading workouts…")
         rule.onNodeWithText("Loading workouts…").assertExists()
         rule.onNodeWithText("Add a Leg workout").assertDoesNotExist()
+    }
+
+    @Test
+    fun checkOut_buzzesConfirm_onlyOnceTheCheckOutSucceeds() {
+        val results = MutableSharedFlow<Boolean>(extraBufferCapacity = 2)
+        show(base.copy(openVisit = GymVisit(checkInAt = now - 60_000, source = VisitSource.AUTO)), checkOutResults = results)
+        scrollTo("Check out")
+        rule.onNodeWithText("Check out").performClick()
+        rule.runOnIdle { assertEquals(emptyList<HapticFeedbackType>(), haptics.performed) }
+        rule.runOnIdle { results.tryEmit(true) }
+        rule.runOnIdle { assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed) }
     }
 }

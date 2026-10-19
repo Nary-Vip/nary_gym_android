@@ -1,5 +1,7 @@
 package com.nary.gym.widget
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
 import androidx.glance.testing.unit.hasText
@@ -14,11 +16,29 @@ class WorkoutWidgetContentTest {
 
     @Test
     fun notDone_showsTodayAndMarkComplete() = runGlanceAppWidgetUnitTest {
+        setAppWidgetSize(DpSize(250.dp, 250.dp))
         provideComposable { WorkoutWidgetContent(rotationDay(WorkOutType.LEG, completedToday = false)) }
         onNode(hasText("TODAY")).assertExists()
         onNode(hasText("Leg Day")).assertExists()
         onNode(hasText("Mark complete")).assert(hasRunCallbackClickAction<CompleteWorkoutAction>())
         onNode(hasText("Done ✓")).assertDoesNotExist()
+    }
+
+    @Test
+    fun smallWidget_dropsTodayLabel_butKeepsDayAndButton() = runGlanceAppWidgetUnitTest {
+        setAppWidgetSize(DpSize(110.dp, 110.dp))
+        provideComposable { WorkoutWidgetContent(rotationDay(WorkOutType.LEG, completedToday = false)) }
+        onNode(hasText("TODAY")).assertDoesNotExist()
+        onNode(hasText("Leg Day")).assertExists()
+        onNode(hasText("Mark complete")).assertExists()
+    }
+
+    @Test
+    fun largeFontOnRoomyWidget_alsoUsesCompactLayout() = runGlanceAppWidgetUnitTest {
+        setAppWidgetSize(DpSize(250.dp, 250.dp))
+        provideComposable { WorkoutWidgetContent(rotationDay(WorkOutType.LEG, completedToday = false), fontScale = 2f) }
+        onNode(hasText("TODAY")).assertDoesNotExist()
+        onNode(hasText("Mark complete")).assertExists()
     }
 
     @Test

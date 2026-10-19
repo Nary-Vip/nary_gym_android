@@ -1,5 +1,7 @@
 package com.nary.gym.viewModel
 
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -50,7 +52,10 @@ class CheckInViewModel @Inject constructor(
     var message by mutableStateOf<String?>(null)
         private set
 
-    /** Caller must hold fine location permission. */
+    private val _actionResults = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val actionResults: SharedFlow<Boolean> = _actionResults
+
+
     fun useCurrentLocationAsGym() {
         viewModelScope.launch {
             isLocating = true
@@ -108,7 +113,9 @@ class CheckInViewModel @Inject constructor(
 
     fun manualCheckIn() {
         viewModelScope.launch {
-            message = when (repository.checkIn(VisitSource.MANUAL)) {
+            val result = repository.checkIn(VisitSource.MANUAL)
+            _actionResults.tryEmit(result is CheckInResult.CheckedIn)
+            message = when (result) {
                 is CheckInResult.CheckedIn -> "Checked in"
                 is CheckInResult.AlreadyCheckedIn -> "You're already checked in"
             }
@@ -117,7 +124,9 @@ class CheckInViewModel @Inject constructor(
 
     fun manualCheckOut() {
         viewModelScope.launch {
-            message = when (val result = repository.checkOut()) {
+            val result = repository.checkOut()
+            _actionResults.tryEmit(result !is CheckOutResult.NotCheckedIn)
+            message = when (result) {
                 is CheckOutResult.CheckedOut ->
                     "Checked out · ${formatDuration(result.visit.checkOutAt!! - result.visit.checkInAt)}"
                 CheckOutResult.Discarded -> "Visit under 5 minutes discarded"
