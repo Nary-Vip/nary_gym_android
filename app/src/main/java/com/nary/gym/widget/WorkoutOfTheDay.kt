@@ -2,6 +2,9 @@ package com.nary.gym.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.Button
@@ -34,12 +37,14 @@ import com.nary.gym.MainActivity
 import com.nary.gym.utils.RotationDay
 import com.nary.gym.utils.WorkoutCycle
 import com.nary.gym.utils.rotationDay
+import com.nary.gym.utils.rotationDayUpdates
 
 class WorkoutWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val cycle = WorkoutCycle(context)
         provideContent {
-            val day = rotationDay(cycle.getCurrentDayWorkout(), cycle.hasCompletedToday())
+            val updates = remember { cycle.rotationDayUpdates() }
+            val day by updates.collectAsState(initial = cycle.rotationDay())
             GlanceTheme(colors = VoltWidgetColors) { WorkoutWidgetContent(day) }
         }
     }

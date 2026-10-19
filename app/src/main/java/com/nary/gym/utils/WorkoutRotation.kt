@@ -1,6 +1,9 @@
 package com.nary.gym.utils
 
 import com.nary.gym.core.WorkOutType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 data class RotationDay(
     val dayType: WorkOutType,
@@ -22,3 +25,8 @@ fun rotationDay(current: WorkOutType, completedToday: Boolean): RotationDay {
         completedToday = completedToday,
     )
 }
+
+fun WorkoutCycle.rotationDay(): RotationDay = rotationDay(getCurrentDayWorkout(), hasCompletedToday())
+
+fun WorkoutCycle.rotationDayUpdates(): Flow<RotationDay> =
+    changes().onStart { emit(Unit) }.map { rotationDay() }

@@ -1,11 +1,21 @@
 package com.nary.gym.utils
 import android.content.Context
+import android.content.SharedPreferences
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import com.nary.gym.core.WorkOutType
 import androidx.core.content.edit
 import java.time.LocalDate
 
 class WorkoutCycle(context: Context){
     private var pref = context.getSharedPreferences("workout_cycles", Context.MODE_PRIVATE)
+
+    fun changes(): Flow<Unit> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(Unit) }
+        pref.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { pref.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
 
     private val entries = WorkOutType.entries
 
