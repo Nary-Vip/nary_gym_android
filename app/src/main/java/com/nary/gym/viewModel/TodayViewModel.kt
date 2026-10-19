@@ -45,7 +45,7 @@ data class TodayUiState(
     val weekMillis: Long = 0,
     val openVisit: GymVisit? = null,
     val autoCheckInReady: Boolean = true,
-    val syncing: Boolean = false,
+    val syncing: Boolean = true,
 )
 
 private data class CycleSnapshot(val current: WorkOutType, val completedToday: Boolean, val date: LocalDate)

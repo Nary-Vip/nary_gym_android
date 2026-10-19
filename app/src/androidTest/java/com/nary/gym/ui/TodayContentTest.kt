@@ -42,7 +42,7 @@ class TodayContentTest {
     private val base = TodayUiState(
         dayType = WorkOutType.LEG, dayNumber = 1, dayCount = 4, completedToday = false,
         nextUp = WorkOutType.CHEST, exercises = listOf(squat), weekVisits = 3,
-        weekMillis = Duration.ofMinutes(260).toMillis(), openVisit = null, autoCheckInReady = true,
+        weekMillis = Duration.ofMinutes(260).toMillis(), openVisit = null, autoCheckInReady = true, syncing = false,
     )
 
     private fun show(
@@ -149,5 +149,13 @@ class TodayContentTest {
         scrollTo("Check out")
         rule.onNodeWithText("Check out").performClick()
         assertEquals(listOf(HapticFeedbackType.Confirm), haptics.performed)
+    }
+
+    @Test
+    fun initialState_beforeDataArrives_showsLoadingInsteadOfEmptyState() {
+        show(TodayUiState())
+        scrollTo("Loading workouts…")
+        rule.onNodeWithText("Loading workouts…").assertExists()
+        rule.onNodeWithText("Add a Leg workout").assertDoesNotExist()
     }
 }
