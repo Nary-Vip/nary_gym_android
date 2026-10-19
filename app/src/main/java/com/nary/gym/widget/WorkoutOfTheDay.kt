@@ -1,77 +1,86 @@
 package com.nary.gym.widget
 
 import android.content.Context
-import android.content.Intent
-import android.util.Log
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.Button
+import androidx.glance.ButtonDefaults
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
 import androidx.glance.background
-import androidx.glance.color.ColorProvider
-import androidx.glance.layout.*
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Column
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
-import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.nary.gym.MainActivity
+import com.nary.gym.utils.RotationDay
 import com.nary.gym.utils.WorkoutCycle
+import com.nary.gym.utils.rotationDay
 
 class WorkoutWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        
-        val workoutTitle = try {
-            val workoutCycle = WorkoutCycle(context)
-            workoutCycle.getCurrentDayWorkout().title.uppercase()
-        } catch (e: Exception) {
-            Log.e("WorkoutWidget", "Error getting workout", e)
-            "ERROR"
-        }
-
+        val cycle = WorkoutCycle(context)
         provideContent {
-            Box(modifier = GlanceModifier.background(Color.Black).cornerRadius(10.dp)) {
-                Column(
-                    modifier = GlanceModifier.fillMaxSize().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "TODAY'S WORKOUT", style = TextStyle(color = ColorProvider(Color.White, Color.White), textAlign = TextAlign.Center))
-                    Spacer(modifier = GlanceModifier.height(12.dp))
-                    Text(text = workoutTitle, style = TextStyle(color = ColorProvider(Color.White,
-                        Color.White), fontWeight = FontWeight.Bold
-                    ))
-                    Spacer(modifier = GlanceModifier.height(22.dp))
-                    Button(
-                        modifier = GlanceModifier.fillMaxWidth().background(Color.Gray),
-                        text = "VIEW",
-                        style = TextStyle(color = ColorProvider(Color.White, Color.White)),
-                        onClick = actionRunCallback<CompleteWorkoutAction>()
-                    )
-                }
-            }
+            val day = rotationDay(cycle.getCurrentDayWorkout(), cycle.hasCompletedToday())
+            GlanceTheme(colors = VoltWidgetColors) { WorkoutWidgetContent(day) }
+        }
+    }
+}
+
+@Composable
+fun WorkoutWidgetContent(day: RotationDay) {
+    val onContainer = GlanceTheme.colors.onPrimaryContainer
+    Column(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .cornerRadius(16.dp)
+            .background(GlanceTheme.colors.primaryContainer)
+            .clickable(actionStartActivity<MainActivity>())
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (day.completedToday) {
+            Text("Done ✓", style = TextStyle(color = onContainer, fontSize = 20.sp, fontWeight = FontWeight.Bold))
+            Text("Next: ${day.nextUp.title}", style = TextStyle(color = onContainer, fontSize = 14.sp))
+        } else {
+            Text("TODAY", style = TextStyle(color = onContainer, fontSize = 11.sp, fontWeight = FontWeight.Medium))
+            Text("${day.dayType.title} Day", style = TextStyle(color = onContainer, fontSize = 20.sp, fontWeight = FontWeight.Bold))
+            Spacer(GlanceModifier.height(12.dp))
+            Button(
+                text = "Mark complete",
+                onClick = actionRunCallback<CompleteWorkoutAction>(),
+                modifier = GlanceModifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = onContainer,
+                    contentColor = GlanceTheme.colors.primaryContainer,
+                ),
+            )
         }
     }
 }
 
 class CompleteWorkoutAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters
-    ) {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("source", "notification_yes")
-        }
-        context.startActivity(intent)
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        WorkoutCycle(context).moveToNextDayWorkOut()
+        WorkoutWidget().updateAll(context)
     }
 }
 

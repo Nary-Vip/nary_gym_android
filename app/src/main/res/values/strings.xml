@@ -2,8 +2,8 @@
     <string name="app_name">Nary Gym</string>
     <string name="appwidget_text">EXAMPLE</string>
     <string name="add_widget">Add widget</string>
-    <string name="app_widget_description">This is an app widget description</string>
-    <string name="todayworkouttitle">TODAY\'S WORKOUT</string>
-    <string name="todayworkoutday">CHEST</string>
-    <string name="todayworkoutbutton">VIEW</string>
+    <string name="app_widget_description">Today\'s workout at a glance</string>
+    <string name="todayworkouttitle">TODAY</string>
+    <string name="todayworkoutday">Leg Day</string>
+    <string name="todayworkoutbutton">Mark complete</string>
 </resources>

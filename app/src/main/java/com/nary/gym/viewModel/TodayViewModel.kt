@@ -16,6 +16,7 @@ import com.nary.gym.repository.local.GymVisitRepository
 import com.nary.gym.repository.remote.WorkOutRepository
 import com.nary.gym.utils.WorkoutCycle
 import com.nary.gym.utils.formatDuration
+import com.nary.gym.utils.rotationDay
 import com.nary.gym.utils.getErrorMessage
 import com.nary.gym.utils.weeklySummary
 import com.nary.gym.widget.WorkoutWidget
@@ -73,18 +74,15 @@ class TodayViewModel @Inject constructor(
         cycle,
         autoCheckInReady,
     ) { workouts, visits, openVisit, cycleNow, ready ->
-        val types = WorkOutType.entries
-        val currentIndex = types.indexOf(cycleNow.current)
-        val dayIndex = if (cycleNow.completedToday) (currentIndex - 1 + types.size) % types.size else currentIndex
-        val dayType = types[dayIndex]
+        val day = rotationDay(cycleNow.current, cycleNow.completedToday)
         val summary = weeklySummary(visits, clock.instant(), clock.zone)
         TodayUiState(
-            dayType = dayType,
-            dayNumber = dayIndex + 1,
-            dayCount = types.size,
-            completedToday = cycleNow.completedToday,
-            nextUp = types[(dayIndex + 1) % types.size],
-            exercises = workouts.filter { it.workOutType == dayType },
+            dayType = day.dayType,
+            dayNumber = day.dayNumber,
+            dayCount = day.dayCount,
+            completedToday = day.completedToday,
+            nextUp = day.nextUp,
+            exercises = workouts.filter { it.workOutType == day.dayType },
             weekVisits = summary.visitCount,
             weekMillis = summary.totalMillis,
             openVisit = openVisit,

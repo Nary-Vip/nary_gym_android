@@ -5,6 +5,7 @@
     android:initialLayout="@layout/glance_default_layout"
     android:previewLayout="@layout/widget_preview"
     android:previewImage="@mipmap/ic_launcher"
+    android:updatePeriodMillis="1800000"
     android:minWidth="110dp"
     android:minHeight="110dp"
     android:targetCellWidth="2"
