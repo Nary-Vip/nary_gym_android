@@ -15,6 +15,10 @@ class AlarmReceiver: BroadcastReceiver() {
     lateinit var tokenManager: TokenManager
 
     override fun onReceive(context: Context, p1: Intent?) {
+        val remindersOn = runCatching { tokenManager.getNotificationPreference() }
+            .onFailure { Log.e("AlarmReceiver", "Failed to read reminder preference", it) }
+            .getOrDefault(true)
+        if (!remindersOn) return
         NotificationHelper.showGym(context)
         try {
             // This self-reschedule is the only thing that arms tomorrow's alarm; if reading
