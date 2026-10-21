@@ -1,5 +1,6 @@
 package com.nary.gym.ui.viewmodel
 
+import com.nary.gym.sync.SyncRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,7 +33,8 @@ sealed class LoginUiState {
 class LoginViewModel @Inject constructor(
     private val repository: AuthRepository,
     private val user: UserSession,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val syncRequester: SyncRequester,
 ) : ViewModel() {
 
     var formState by mutableStateOf(LoginFormState())
@@ -80,6 +82,7 @@ class LoginViewModel @Inject constructor(
                     accessToken = response.token.accessToken,
                     refreshToken = response.token.refreshToken
                 )
+                syncRequester.request()
                 uiState = LoginUiState.Success(response.user.name)
             } catch (e: Exception) {
                 uiState = LoginUiState.Error(e.getErrorMessage())

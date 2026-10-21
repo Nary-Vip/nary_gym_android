@@ -1,5 +1,6 @@
 package com.nary.gym
 
+import com.nary.gym.sync.WorkoutSyncScheduler
 import android.app.Application
 import com.nary.gym.widget.WorkoutWidget
 import androidx.glance.appwidget.updateAll
@@ -39,6 +40,9 @@ class NaryApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var gymLocationStore: GymLocationStore
 
+    @Inject
+    lateinit var workoutSyncScheduler: WorkoutSyncScheduler
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -56,6 +60,7 @@ class NaryApplication : Application(), Configuration.Provider {
         NotificationHelper.createNotificationChannel(this)
         CheckInNotificationHelper.createChannel(this)
         ReminderWatchdogWorker.ensureScheduled(this)
+        if (tokenManager.getAccessToken() != null) workoutSyncScheduler.request()
 
         applicationScope.launch {
             userSession.currentUser.collectLatest { user ->
@@ -74,9 +79,6 @@ class NaryApplication : Application(), Configuration.Provider {
             }
         }
 
-        // Forced logout (refresh failed in TokenAuthenticator). The currentUser watcher above can
-        // miss it: after a process restart the in-memory user is already null, so clearing it
-        // emits nothing and auto check-in / reminders would keep running while logged out.
         applicationScope.launch {
             userSession.unauthorizedEvent.collect {
                 if (tokenManager.getAccessToken() == null) onLoggedOut()
@@ -84,11 +86,11 @@ class NaryApplication : Application(), Configuration.Provider {
         }
     }
 
-    /** Stops everything tied to the signed-in user. Idempotent; visit history is kept (D8). */
     private suspend fun onLoggedOut() {
         NotificationHelper.cancelNotification(this)
         AlarmScheduler.cancelDailyAlarm(this)
         gymLocationStore.setAutoCheckInEnabled(false)
         gymGeofenceManager.unregister()
+        workoutSyncScheduler.cancel()
     }
 }
