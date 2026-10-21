@@ -51,7 +51,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
             isLoading = true
             errorMessage = null
             try {
-                repository.syncWorkouts()
+                repository.sync()
             } catch (e: Exception) {
                 errorMessage = e.getErrorMessage()
             } finally {
@@ -64,7 +64,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
         viewModelScope.launch {
             errorMessage = null
             try {
-                repository.insert(workOuts)
+                repository.save(workOuts)
             } catch (e: Exception) {
                 errorMessage = e.getErrorMessage()
             }
@@ -87,7 +87,7 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
         viewModelScope.launch {
             errorMessage = null
             try {
-                repository.update(workOuts)
+                repository.save(workOuts)
             } catch (e: Exception) {
                 errorMessage = e.getErrorMessage()
             }

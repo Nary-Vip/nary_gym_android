@@ -102,7 +102,7 @@ class TodayViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             try {
-                workOutRepository.syncWorkouts()
+                workOutRepository.sync()
             } catch (e: Exception) {
                 if (e is CancellationException) {
                     ensureActive()

@@ -1,128 +1,125 @@
 package com.nary.gym.repository.remote
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import com.nary.gym.core.WorkOutType
-import com.nary.gym.data.remote.ApiService
-import com.nary.gym.data.remote.dto.Workout
+import com.nary.gym.data.room_db.SyncState
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.data.room_db.WorkOutsDao
-import com.nary.gym.utils.downloadImageToInternalStorage
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import com.nary.gym.sync.SyncRequester
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
-import java.net.URLConnection
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Singleton
 
+enum class SyncOutcome { SUCCESS, RETRY }
+
+private const val DUPLICATE_NAME = "A workout with this name already exists"
+
+@Singleton
 class WorkOutRepository @Inject constructor(
     private val dao: WorkOutsDao,
-    private val api: ApiService,
-    @param:ApplicationContext private val context: Context
+    private val remote: WorkoutRemote,
+    private val syncRequester: SyncRequester,
 ) {
-    fun getAllWorkouts(): Flow<List<WorkOuts>> {
-        return dao.getAllWorkouts()
+    private val mutex = Mutex()
+
+    fun getAllWorkouts(): Flow<List<WorkOuts>> = dao.getAllWorkouts()
+
+    fun getWorkoutsByType(type: WorkOutType): Flow<List<WorkOuts>> = dao.getWorkoutsByType(type)
+
+    suspend fun save(workout: WorkOuts) {
+        val row = if (workout.id.isBlank()) workout.copy(id = "local-${UUID.randomUUID()}") else workout
+        dao.saveLocal(row)
+        syncRequester.request()
     }
 
-    fun getWorkoutsByType(type: WorkOutType): Flow<List<WorkOuts>> {
-        return dao.getWorkoutsByType(type)
+    suspend fun delete(workout: WorkOuts) {
+        dao.deleteLocal(workout.id)
+        syncRequester.request()
     }
 
-    suspend fun insert(workOuts: WorkOuts) {
-        val response = api.createWorkout(
-            workoutName = workOuts.workOutName.toRequestBody("text/plain".toMediaType()),
-            workOutType = workOuts.workOutType.name.toRequestBody("text/plain".toMediaType()),
-            image = if (workOuts.workOutImage.isNotBlank()) uriToMultipart(workOuts.workOutImage) else null
-        )
-        dao.insert(workOuts.copy(id = response.workout.id))
-    }
-
-    suspend fun update(workOuts: WorkOuts) {
-        val response = api.updateWorkout(
-            id = workOuts.id,
-            workOutName = workOuts.workOutName.toRequestBody("text/plain".toMediaType()),
-            workOutType = workOuts.workOutType.name.toRequestBody("text/plain".toMediaType()),
-            image = if (workOuts.workOutImage.isNotBlank() && !workOuts.workOutImage.startsWith("http")) 
-                uriToMultipart(workOuts.workOutImage) else null
-        )
-        dao.update(workOuts.copy(id = response.workout.id))
-    }
-
-    suspend fun delete(workOuts: WorkOuts) {
-        api.deleteWorkout(workOuts.id)
-        dao.delete(workOuts)
-    }
-
-    suspend fun syncWorkouts() {
-        if (!isNetworkAvailable(context)) return
-
-        val allWorkouts = fetchAllWorkoutPages()
-
-        val workoutEntries = withContext(Dispatchers.IO) {
-            allWorkouts.map { work ->
-                WorkOuts(
-                    id = work.id,
-                    workOutName = work.workOutName,
-                    workOutImage = downloadImageToInternalStorage(context, work.workOutImage),
-                    workOutType = WorkOutType.valueOf(work.workOutType.uppercase()),
-                    serverId = work.id,
-                )
-            }
+    suspend fun sync(): SyncOutcome = mutex.withLock {
+        try {
+            val pending = dao.pendingForSync()
+            pending.filter { it.syncState == SyncState.PENDING_CREATE }.forEach { pushCreate(it.id) }
+            pending.filter { it.syncState == SyncState.PENDING_UPDATE }.forEach { pushUpdate(it.id) }
+            pending.filter { it.syncState == SyncState.PENDING_DELETE }.forEach { pushDelete(it.id) }
+            dao.mergeFromServer(remote.fetchAll())
+            SyncOutcome.SUCCESS
+        } catch (e: WorkoutRemoteException.Retryable) {
+            SyncOutcome.RETRY
         }
-
-        dao.mergeFromServer(workoutEntries)
     }
 
-    private suspend fun fetchAllWorkoutPages(): List<Workout> {
-        val allWorkouts = mutableListOf<Workout>()
-        var page = 1
-        while (true) {
-            val response = api.getAllWorkOuts(
-                page = page,
-                search = null,
-                type = null,
-                limit = 100
-            )
-            allWorkouts += response.workouts
-            if (response.workouts.isEmpty() || page >= response.totalPages) break
-            page++
+    private suspend fun current(id: String, state: SyncState): WorkOuts? =
+        dao.getById(id)?.takeIf { it.syncState == state && it.syncError == null }
+
+    private suspend fun pushCreate(id: String) {
+        val row = current(id, SyncState.PENDING_CREATE) ?: return
+        val serverId = try {
+            remote.create(row.workOutName, row.workOutType, row.workOutImage)
+        } catch (e: WorkoutRemoteException.Conflict) {
+            adoptExisting(row)
+            return
+        } catch (e: WorkoutRemoteException.Rejected) {
+            dao.markRejected(row.id, e.message)
+            return
         }
-        return allWorkouts
+        if (dao.finishCreate(row.id, serverId, row.version) == 0) deleteOrphan(serverId)
     }
 
-    private fun isNetworkAvailable(context: Context): Boolean {
-        val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE)
-                    as ConnectivityManager
-
-        val network = connectivityManager.activeNetwork ?: return false
-
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(network)
-                ?: return false
-
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    private suspend fun deleteOrphan(serverId: String) {
+        try {
+            remote.delete(serverId)
+        } catch (e: WorkoutRemoteException.NotFound) {
+            return
+        } catch (e: WorkoutRemoteException) {
+            dao.insertTombstone(serverId)
+            if (e is WorkoutRemoteException.Retryable) throw e
+        }
     }
 
-    private fun uriToMultipart(filePath: String): MultipartBody.Part? {
-        val file = File(filePath)
-        if (!file.exists()) return null
+    private suspend fun adoptExisting(row: WorkOuts) {
+        val serverId = remote.findIdByExactName(row.workOutName)
+        if (serverId == null) {
+            dao.markRejected(row.id, DUPLICATE_NAME)
+            return
+        }
+        dao.getByServerId(serverId)
+            ?.takeIf { it.id != row.id && it.syncState == SyncState.SYNCED }
+            ?.let { dao.deleteById(it.id) }
+        dao.adoptServerId(row.id, serverId)
+        pushUpdate(row.id)
+    }
 
-        val mimeType = URLConnection.guessContentTypeFromName(file.name) ?: "image/jpeg"
-        val requestBody = file.asRequestBody(mimeType.toMediaTypeOrNull())
+    private suspend fun pushUpdate(id: String) {
+        val row = current(id, SyncState.PENDING_UPDATE) ?: return
+        val serverId = row.serverId ?: return
+        try {
+            remote.update(serverId, row.workOutName, row.workOutType, row.workOutImage)
+            dao.finishUpdate(row.id, row.version)
+        } catch (e: WorkoutRemoteException.NotFound) {
+            dao.markForRecreate(row.id)
+        } catch (e: WorkoutRemoteException.Conflict) {
+            dao.markRejected(row.id, DUPLICATE_NAME)
+        } catch (e: WorkoutRemoteException.Rejected) {
+            dao.markRejected(row.id, e.message)
+        }
+    }
 
-        return MultipartBody.Part.createFormData(
-            "image",
-            file.name,
-            requestBody
-        )
+    private suspend fun pushDelete(id: String) {
+        val row = current(id, SyncState.PENDING_DELETE) ?: return
+        val serverId = row.serverId ?: return dao.deleteById(row.id)
+        try {
+            remote.delete(serverId)
+            dao.deleteById(row.id)
+        } catch (e: WorkoutRemoteException.NotFound) {
+            dao.deleteById(row.id)
+        } catch (e: WorkoutRemoteException.Rejected) {
+            dao.markRejected(row.id, e.message)
+        } catch (e: WorkoutRemoteException.Conflict) {
+            dao.markRejected(row.id, DUPLICATE_NAME)
+        }
     }
 }
