@@ -16,6 +16,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.data.room_db.WorkoutDatabase
+import com.nary.gym.repository.FakeAccount
 import com.nary.gym.repository.FakeWorkoutRemote
 import com.nary.gym.repository.remote.WorkOutRepository
 import com.nary.gym.repository.remote.WorkoutRemoteException
@@ -38,7 +39,7 @@ class WorkoutSyncWorkerTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(context, WorkoutDatabase::class.java).build()
-        repository = WorkOutRepository(db.workoutDao(), remote) {}
+        repository = WorkOutRepository(db.workoutDao(), remote, FakeAccount("u1")) {}
     }
 
     @After

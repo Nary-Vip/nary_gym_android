@@ -1,5 +1,6 @@
 package com.nary.gym.data.session
 
+import com.nary.gym.data.local.TokenManager
 import com.nary.gym.data.remote.dto.UserResponse
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class UserSession @Inject constructor() {
+class UserSession @Inject constructor(private val tokenManager: TokenManager) {
     private val _currentUser = MutableStateFlow<UserResponse?>(null)
     val currentUser: StateFlow<UserResponse?> = _currentUser.asStateFlow();
 
@@ -19,6 +20,7 @@ class UserSession @Inject constructor() {
     val unauthorizedEvent: SharedFlow<Unit> = _unauthorizedEvent.asSharedFlow()
 
     fun setUser(user: UserResponse){
+        tokenManager.saveAccountId(user.id)
         _currentUser.value = user
     }
 

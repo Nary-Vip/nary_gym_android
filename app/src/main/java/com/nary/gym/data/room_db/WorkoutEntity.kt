@@ -18,4 +18,5 @@ data class WorkOuts(
     @ColumnInfo(defaultValue = "0")
     val version: Int = 0,
     val syncError: String? = null,
+    val ownerId: String? = null,
 )

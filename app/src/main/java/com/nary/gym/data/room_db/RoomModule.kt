@@ -7,6 +7,7 @@ import androidx.room.Room
 import com.nary.gym.data.room_db.GymVisitDao
 import com.nary.gym.data.room_db.MIGRATION_5_6
 import com.nary.gym.data.room_db.MIGRATION_6_7
+import com.nary.gym.data.room_db.MIGRATION_7_8
 import com.nary.gym.data.room_db.WorkOutsDao
 import com.nary.gym.data.room_db.WorkoutDatabase
 
@@ -34,7 +35,7 @@ object RoomModule {
             WorkoutDatabase::class.java,
             "workout_database"
         )
-            .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .fallbackToDestructiveMigration(true)
             .build()
     }

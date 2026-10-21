@@ -30,6 +30,7 @@ class WorkoutSyncTest {
     private lateinit var db: WorkoutDatabase
     private lateinit var dao: WorkOutsDao
     private val remote = FakeWorkoutRemote()
+    private val account = FakeAccount("u1")
     private var requests = 0
     private lateinit var repository: WorkOutRepository
 
@@ -37,7 +38,7 @@ class WorkoutSyncTest {
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), WorkoutDatabase::class.java).build()
         dao = db.workoutDao()
-        repository = WorkOutRepository(dao, remote, SyncRequester { requests++ })
+        repository = WorkOutRepository(dao, remote, account, SyncRequester { requests++ })
     }
 
     @After
@@ -47,7 +48,7 @@ class WorkoutSyncTest {
 
     private val squat = WorkOuts(id = "", workOutName = "Squat", workOutType = WorkOutType.LEG, workOutImage = "/f/a.jpg")
 
-    private suspend fun only(): WorkOuts = dao.getAllWorkouts().first().single()
+    private suspend fun only(): WorkOuts = repository.getAllWorkouts().first().single()
 
     private suspend fun serverRow(id: String, name: String) {
         remote.server[id] = squat.copy(id = id, workOutName = name, serverId = id)
@@ -111,7 +112,7 @@ class WorkoutSyncTest {
         repository.sync()
         assertTrue("delete:s1" in remote.calls)
         assertTrue(remote.server.isEmpty())
-        assertTrue(dao.getAllWorkouts().first().isEmpty())
+        assertTrue(repository.getAllWorkouts().first().isEmpty())
         assertNull(dao.getById(row.id))
     }
 
@@ -138,7 +139,7 @@ class WorkoutSyncTest {
         val row = dao.getById("local-x")!!
         assertEquals("s7", row.serverId)
         assertEquals(SyncState.SYNCED, row.syncState)
-        assertEquals(1, dao.getAllWorkouts().first().size)
+        assertEquals(1, repository.getAllWorkouts().first().size)
     }
 
     @Test
@@ -174,5 +175,48 @@ class WorkoutSyncTest {
         assertEquals(SyncOutcome.RETRY, repository.sync())
         assertFalse("fetchAll" in remote.calls)
         assertEquals(SyncState.PENDING_CREATE, only().syncState)
+    }
+
+    @Test
+    fun save_stampsTheCurrentAccount() = runBlocking {
+        repository.save(squat)
+        assertEquals("u1", only().ownerId)
+    }
+
+    @Test
+    fun otherAccountsPendingChange_isNotUploaded_untilThatAccountReturns() = runBlocking {
+        repository.save(squat)
+        account.accountId.value = "u2"
+        assertEquals(SyncOutcome.SUCCESS, repository.sync())
+        assertFalse(remote.calls.any { it.startsWith("create") })
+        assertTrue(repository.getAllWorkouts().first().isEmpty())
+        account.accountId.value = "u1"
+        assertEquals(SyncState.PENDING_CREATE, only().syncState)
+        repository.sync()
+        assertTrue("create:Squat" in remote.calls)
+        assertEquals(SyncState.SYNCED, only().syncState)
+    }
+
+    @Test
+    fun noAccountId_retriesWithoutCalls_thenClaimsTheRow() = runBlocking {
+        account.accountId.value = null
+        repository.save(squat)
+        assertEquals(1, repository.getAllWorkouts().first().size)
+        assertEquals(SyncOutcome.RETRY, repository.sync())
+        assertTrue(remote.calls.isEmpty())
+        account.accountId.value = "u1"
+        assertEquals(SyncOutcome.SUCCESS, repository.sync())
+        assertEquals("u1", only().ownerId)
+        assertEquals(SyncState.SYNCED, only().syncState)
+    }
+
+    @Test
+    fun accountChangeDuringSync_stopsBeforeTheNextUpload() = runBlocking {
+        repository.save(squat)
+        repository.save(squat.copy(workOutName = "Lunge"))
+        remote.duringCreate = { account.accountId.value = "u2" }
+        assertEquals(SyncOutcome.RETRY, repository.sync())
+        assertEquals(1, remote.calls.count { it.startsWith("create") })
+        assertFalse("fetchAll" in remote.calls)
     }
 }

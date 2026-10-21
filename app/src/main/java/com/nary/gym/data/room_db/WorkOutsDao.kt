@@ -24,11 +24,11 @@ interface WorkOutsDao {
     @Delete
     suspend fun delete(workOuts: WorkOuts)
 
-    @Query("SELECT * FROM workouts WHERE syncState != 'PENDING_DELETE' ORDER BY id")
-    fun getAllWorkouts(): Flow<List<WorkOuts>>
+    @Query("SELECT * FROM workouts WHERE syncState != 'PENDING_DELETE' AND (ownerId = :owner OR ownerId IS NULL) ORDER BY id")
+    fun getAllWorkouts(owner: String): Flow<List<WorkOuts>>
 
-    @Query("SELECT * FROM workouts WHERE workOutType = :type AND syncState != 'PENDING_DELETE'")
-    fun getWorkoutsByType(type: WorkOutType): Flow<List<WorkOuts>>
+    @Query("SELECT * FROM workouts WHERE workOutType = :type AND syncState != 'PENDING_DELETE' AND (ownerId = :owner OR ownerId IS NULL)")
+    fun getWorkoutsByType(type: WorkOutType, owner: String): Flow<List<WorkOuts>>
 
     @Query("SELECT * FROM workouts WHERE id = :id")
     suspend fun getById(id: String): WorkOuts?
@@ -36,11 +36,14 @@ interface WorkOutsDao {
     @Query("SELECT * FROM workouts WHERE serverId = :serverId LIMIT 1")
     suspend fun getByServerId(serverId: String): WorkOuts?
 
-    @Query("SELECT * FROM workouts WHERE syncState = 'SYNCED'")
-    suspend fun syncedRows(): List<WorkOuts>
+    @Query("SELECT * FROM workouts WHERE syncState = 'SYNCED' AND ownerId = :owner")
+    suspend fun syncedRows(owner: String): List<WorkOuts>
 
-    @Query("SELECT * FROM workouts WHERE syncState != 'SYNCED' AND syncError IS NULL ORDER BY id")
-    suspend fun pendingForSync(): List<WorkOuts>
+    @Query("SELECT * FROM workouts WHERE syncState != 'SYNCED' AND syncError IS NULL AND ownerId = :owner ORDER BY id")
+    suspend fun pendingForSync(owner: String): List<WorkOuts>
+
+    @Query("UPDATE workouts SET ownerId = :owner WHERE ownerId IS NULL")
+    suspend fun claimUnowned(owner: String)
 
     @Query(
         "UPDATE workouts SET serverId = :serverId, " +
@@ -64,7 +67,7 @@ interface WorkOutsDao {
     @Query("DELETE FROM workouts WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    suspend fun insertTombstone(serverId: String) = insert(
+    suspend fun insertTombstone(serverId: String, owner: String) = insert(
         WorkOuts(
             id = serverId,
             workOutName = "",
@@ -72,6 +75,7 @@ interface WorkOutsDao {
             workOutImage = "",
             serverId = serverId,
             syncState = SyncState.PENDING_DELETE,
+            ownerId = owner,
         )
     )
 
@@ -89,6 +93,7 @@ interface WorkOutsDao {
                     syncState = if (existing.syncState == SyncState.SYNCED) SyncState.PENDING_UPDATE else existing.syncState,
                     version = existing.version + 1,
                     syncError = null,
+                    ownerId = existing.ownerId ?: workout.ownerId,
                 )
             )
         }
@@ -105,9 +110,9 @@ interface WorkOutsDao {
     }
 
     @Transaction
-    suspend fun mergeFromServer(server: List<WorkOuts>) {
+    suspend fun mergeFromServer(server: List<WorkOuts>, owner: String) {
         val serverIds = server.mapNotNull { it.serverId }.toSet()
-        syncedRows().filter { it.serverId !in serverIds }.forEach { deleteById(it.id) }
+        syncedRows(owner).filter { it.serverId !in serverIds }.forEach { deleteById(it.id) }
         server.forEach { remote ->
             val serverId = remote.serverId ?: return@forEach
             val local = getByServerId(serverId)
@@ -115,7 +120,7 @@ interface WorkOutsDao {
                 local == null -> {
                     val sameId = getById(serverId)
                     if (sameId == null || sameId.syncState == SyncState.SYNCED) {
-                        insert(remote.copy(id = serverId, syncState = SyncState.SYNCED, version = 0, syncError = null))
+                        insert(remote.copy(id = serverId, syncState = SyncState.SYNCED, version = 0, syncError = null, ownerId = owner))
                     }
                 }
                 local.syncState == SyncState.SYNCED -> insert(
@@ -123,6 +128,7 @@ interface WorkOutsDao {
                         workOutName = remote.workOutName,
                         workOutType = remote.workOutType,
                         workOutImage = remote.workOutImage,
+                        ownerId = owner,
                     )
                 )
                 else -> Unit

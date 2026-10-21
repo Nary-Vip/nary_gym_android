@@ -19,6 +19,29 @@ class WorkoutDatabaseMigrationTest {
     )
 
     @Test
+    fun migrate7To8_keepsSyncStateAndAddsNullOwner() {
+        helper.createDatabase(TEST_DB, 7).apply {
+            execSQL(
+                "INSERT INTO workouts (id, workOutName, workOutType, workOutImage, serverId, syncState, version) " +
+                    "VALUES ('s1', 'Squat', 'LEG', '/f/a.jpg', 's1', 'PENDING_UPDATE', 2)"
+            )
+            execSQL("INSERT INTO gym_visits (id, checkInAt, checkOutAt, source, autoClosed) VALUES ('v1', 1000, 2000, 'AUTO', 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 8, true, MIGRATION_7_8)
+        db.query("SELECT syncState, version, ownerId FROM workouts WHERE id = 's1'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("PENDING_UPDATE", it.getString(0))
+            assertEquals(2, it.getInt(1))
+            assertTrue(it.isNull(2))
+        }
+        db.query("SELECT COUNT(*) FROM gym_visits").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+    }
+
+    @Test
     fun migrate6To7_keepsDataAndMarksWorkoutsSynced() {
         helper.createDatabase(TEST_DB, 6).apply {
             execSQL("INSERT INTO workouts (id, workOutName, workOutType, workOutImage) VALUES ('s1', 'Squat', 'LEG', '/f/a.jpg')")

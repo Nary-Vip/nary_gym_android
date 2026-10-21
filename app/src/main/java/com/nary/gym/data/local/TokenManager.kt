@@ -7,9 +7,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Singleton
-class TokenManager @Inject constructor(@ApplicationContext context: Context) {
+class TokenManager @Inject constructor(@ApplicationContext context: Context) : CurrentAccount {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -22,6 +25,14 @@ class TokenManager @Inject constructor(@ApplicationContext context: Context) {
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
+
+    private val _accountId = MutableStateFlow(prefs.getString("account_id", null))
+    override val accountId: StateFlow<String?> = _accountId.asStateFlow()
+
+    fun saveAccountId(id: String) {
+        prefs.edit { putString("account_id", id) }
+        _accountId.value = id
+    }
 
     fun saveTokens(accessToken: String, refreshToken: String) {
         prefs.edit {
@@ -56,6 +67,8 @@ class TokenManager @Inject constructor(@ApplicationContext context: Context) {
         prefs.edit {
             remove("access_token")
             remove("refresh_token")
+            remove("account_id")
         }
+        _accountId.value = null
     }
 }
