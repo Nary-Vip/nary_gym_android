@@ -86,6 +86,8 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.okhttp.mockwebserver3)
+    androidTestImplementation(libs.okhttp.tls)
     androidTestImplementation(libs.androidx.glance.appwidget.testing)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
