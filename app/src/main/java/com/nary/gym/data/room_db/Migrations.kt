@@ -17,3 +17,13 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_gym_visits_checkInAt` ON `gym_visits` (`checkInAt`)")
     }
 }
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `workouts` ADD COLUMN `serverId` TEXT")
+        db.execSQL("UPDATE `workouts` SET `serverId` = `id`")
+        db.execSQL("ALTER TABLE `workouts` ADD COLUMN `syncState` TEXT NOT NULL DEFAULT 'SYNCED'")
+        db.execSQL("ALTER TABLE `workouts` ADD COLUMN `version` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `workouts` ADD COLUMN `syncError` TEXT")
+    }
+}

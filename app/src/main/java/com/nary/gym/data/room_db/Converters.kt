@@ -20,4 +20,10 @@ class Converters {
 
     @TypeConverter
     fun toVisitSource(value: String): VisitSource = VisitSource.valueOf(value)
+
+    @TypeConverter
+    fun fromSyncState(value: SyncState): String = value.name
+
+    @TypeConverter
+    fun toSyncState(value: String): SyncState = SyncState.valueOf(value)
 }

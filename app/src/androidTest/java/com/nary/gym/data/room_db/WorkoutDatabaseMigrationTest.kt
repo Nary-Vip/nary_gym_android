@@ -19,6 +19,28 @@ class WorkoutDatabaseMigrationTest {
     )
 
     @Test
+    fun migrate6To7_keepsDataAndMarksWorkoutsSynced() {
+        helper.createDatabase(TEST_DB, 6).apply {
+            execSQL("INSERT INTO workouts (id, workOutName, workOutType, workOutImage) VALUES ('s1', 'Squat', 'LEG', '/f/a.jpg')")
+            execSQL("INSERT INTO gym_visits (id, checkInAt, checkOutAt, source, autoClosed) VALUES ('v1', 1000, 2000, 'AUTO', 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 7, true, MIGRATION_6_7)
+        db.query("SELECT id, serverId, syncState, version, syncError FROM workouts").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("s1", it.getString(0))
+            assertEquals("s1", it.getString(1))
+            assertEquals("SYNCED", it.getString(2))
+            assertEquals(0, it.getInt(3))
+            assertTrue(it.isNull(4))
+        }
+        db.query("SELECT COUNT(*) FROM gym_visits").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+    }
+
+    @Test
     fun migrate5To6_keepsWorkoutsAndCreatesGymVisits() {
         helper.createDatabase(TEST_DB, 5).apply {
             execSQL(
