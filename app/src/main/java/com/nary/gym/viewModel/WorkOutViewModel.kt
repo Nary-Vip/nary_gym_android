@@ -12,6 +12,7 @@ import com.nary.gym.repository.remote.AuthRepository
 import com.nary.gym.repository.remote.WorkOutRepository
 import com.nary.gym.utils.getErrorMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -49,11 +50,10 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
     fun fetchWorkouts() {
         viewModelScope.launch {
             isLoading = true
-            errorMessage = null
             try {
                 repository.sync()
             } catch (e: Exception) {
-                errorMessage = e.getErrorMessage()
+                if (e is CancellationException) throw e
             } finally {
                 isLoading = false
             }
@@ -61,37 +61,15 @@ class WorkOutViewModel @Inject constructor(private val repository: WorkOutReposi
     }
 
     fun insert(workOuts: WorkOuts){
-        viewModelScope.launch {
-            errorMessage = null
-            try {
-                repository.save(workOuts)
-            } catch (e: Exception) {
-                errorMessage = e.getErrorMessage()
-            }
-        }
+        viewModelScope.launch { repository.save(workOuts) }
     }
 
     fun delete(workOuts: WorkOuts, onFailure: () -> Unit = {}){
-        viewModelScope.launch {
-            errorMessage = null
-            try {
-                repository.delete(workOuts)
-            } catch (e: Exception) {
-                errorMessage = e.getErrorMessage()
-                onFailure()
-            }
-        }
+        viewModelScope.launch { repository.delete(workOuts) }
     }
 
     fun update(workOuts: WorkOuts){
-        viewModelScope.launch {
-            errorMessage = null
-            try {
-                repository.save(workOuts)
-            } catch (e: Exception) {
-                errorMessage = e.getErrorMessage()
-            }
-        }
+        viewModelScope.launch { repository.save(workOuts) }
     }
 
     fun clearError() {

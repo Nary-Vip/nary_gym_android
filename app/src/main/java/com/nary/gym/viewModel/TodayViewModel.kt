@@ -17,7 +17,6 @@ import com.nary.gym.repository.remote.WorkOutRepository
 import com.nary.gym.utils.WorkoutCycle
 import com.nary.gym.utils.formatDuration
 import com.nary.gym.utils.rotationDay
-import com.nary.gym.utils.getErrorMessage
 import com.nary.gym.utils.weeklySummary
 import com.nary.gym.widget.WorkoutWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -107,7 +106,6 @@ class TodayViewModel @Inject constructor(
                 if (e is CancellationException) {
                     ensureActive()
                 }
-                message = e.getErrorMessage()
             } finally {
                 syncing.value = false
             }

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nary.gym.core.WorkOutType
+import com.nary.gym.data.room_db.SyncState
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.screens.Workouts.WorkoutsContent
 import com.nary.gym.ui.theme.NaryToDoTheme
@@ -157,5 +158,24 @@ class WorkoutsContentTest {
         show()
         swipeAway("Squat")
         assertTrue(HapticFeedbackType.ContextClick in haptics.performed)
+    }
+
+    @Test
+    fun pendingRow_showsWaitingToSync() {
+        show(listOf(squat.copy(syncState = SyncState.PENDING_UPDATE)))
+        rule.onNodeWithText("Leg · Waiting to sync").assertExists()
+    }
+
+    @Test
+    fun rejectedRow_showsCouldntSyncReason() {
+        show(listOf(squat.copy(syncState = SyncState.PENDING_CREATE, syncError = "Name too short")))
+        rule.onNodeWithText("Leg · Couldn't sync: Name too short").assertExists()
+    }
+
+    @Test
+    fun syncedRow_showsNoSyncLabel() {
+        show(listOf(squat))
+        rule.onNodeWithText("Waiting to sync", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("Couldn't sync", substring = true).assertDoesNotExist()
     }
 }

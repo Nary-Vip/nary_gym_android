@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.nary.gym.data.room_db.SyncState
 import com.nary.gym.data.room_db.WorkOuts
 
 @Composable
@@ -20,7 +21,17 @@ fun WorkoutListItem(workout: WorkOuts, onClick: () -> Unit, modifier: Modifier =
     ListItem(
         modifier = modifier.clickable(onClick = onClick),
         headlineContent = { Text(workout.workOutName, style = MaterialTheme.typography.titleMedium) },
-        supportingContent = { Text(workout.workOutType.title) },
+        supportingContent = {
+            val type = workout.workOutType.title
+            when {
+                workout.syncError != null -> Text(
+                    "$type · Couldn't sync: ${workout.syncError}",
+                    color = MaterialTheme.colorScheme.error,
+                )
+                workout.syncState != SyncState.SYNCED -> Text("$type · Waiting to sync")
+                else -> Text(type)
+            }
+        },
         leadingContent = {
             AsyncImage(
                 model = workout.workOutImage.ifBlank { null },
