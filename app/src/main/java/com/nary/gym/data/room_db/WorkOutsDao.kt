@@ -24,26 +24,109 @@ interface WorkOutsDao {
     @Delete
     suspend fun delete(workOuts: WorkOuts)
 
-    @Query(value = "SELECT * FROM workouts ORDER BY id")
+    @Query("SELECT * FROM workouts WHERE syncState != 'PENDING_DELETE' ORDER BY id")
     fun getAllWorkouts(): Flow<List<WorkOuts>>
 
-    @Query("SELECT * FROM workouts WHERE workOutType = :type")
+    @Query("SELECT * FROM workouts WHERE workOutType = :type AND syncState != 'PENDING_DELETE'")
     fun getWorkoutsByType(type: WorkOutType): Flow<List<WorkOuts>>
 
-    @Query("DELETE FROM workouts")
-    suspend fun deleteAll()
+    @Query("SELECT * FROM workouts WHERE id = :id")
+    suspend fun getById(id: String): WorkOuts?
 
-    @Query("DELETE FROM workouts WHERE id NOT IN (:ids)")
-    suspend fun deleteWorkoutsNotIn(ids: List<String>)
+    @Query("SELECT * FROM workouts WHERE serverId = :serverId LIMIT 1")
+    suspend fun getByServerId(serverId: String): WorkOuts?
 
-    /** Replaces the full local workout set with [workouts], removing anything no longer on the server. */
+    @Query("SELECT * FROM workouts WHERE syncState = 'SYNCED'")
+    suspend fun syncedRows(): List<WorkOuts>
+
+    @Query("SELECT * FROM workouts WHERE syncState != 'SYNCED' AND syncError IS NULL ORDER BY id")
+    suspend fun pendingForSync(): List<WorkOuts>
+
+    @Query(
+        "UPDATE workouts SET serverId = :serverId, " +
+            "syncState = CASE WHEN version = :version THEN 'SYNCED' ELSE 'PENDING_UPDATE' END " +
+            "WHERE id = :id"
+    )
+    suspend fun finishCreate(id: String, serverId: String, version: Int): Int
+
+    @Query("UPDATE workouts SET syncState = 'SYNCED' WHERE id = :id AND version = :version")
+    suspend fun finishUpdate(id: String, version: Int)
+
+    @Query("UPDATE workouts SET serverId = :serverId, syncState = 'PENDING_UPDATE' WHERE id = :id")
+    suspend fun adoptServerId(id: String, serverId: String)
+
+    @Query("UPDATE workouts SET serverId = NULL, syncState = 'PENDING_CREATE' WHERE id = :id")
+    suspend fun markForRecreate(id: String)
+
+    @Query("UPDATE workouts SET syncError = :message WHERE id = :id")
+    suspend fun markRejected(id: String, message: String)
+
+    @Query("DELETE FROM workouts WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    suspend fun insertTombstone(serverId: String) = insert(
+        WorkOuts(
+            id = serverId,
+            workOutName = "",
+            workOutType = WorkOutType.LEG,
+            workOutImage = "",
+            serverId = serverId,
+            syncState = SyncState.PENDING_DELETE,
+        )
+    )
+
     @Transaction
-    suspend fun replaceAllWorkouts(workouts: List<WorkOuts>) {
-        insertAllWorkouts(workouts)
-        if (workouts.isEmpty()) {
-            deleteAll()
+    suspend fun saveLocal(workout: WorkOuts) {
+        val existing = getById(workout.id)
+        if (existing == null) {
+            insert(workout.copy(serverId = null, syncState = SyncState.PENDING_CREATE, version = 1, syncError = null))
         } else {
-            deleteWorkoutsNotIn(workouts.map { it.id })
+            insert(
+                existing.copy(
+                    workOutName = workout.workOutName,
+                    workOutType = workout.workOutType,
+                    workOutImage = workout.workOutImage,
+                    syncState = if (existing.syncState == SyncState.SYNCED) SyncState.PENDING_UPDATE else existing.syncState,
+                    version = existing.version + 1,
+                    syncError = null,
+                )
+            )
+        }
+    }
+
+    @Transaction
+    suspend fun deleteLocal(id: String) {
+        val existing = getById(id) ?: return
+        if (existing.serverId == null) {
+            deleteById(id)
+        } else {
+            insert(existing.copy(syncState = SyncState.PENDING_DELETE, version = existing.version + 1, syncError = null))
+        }
+    }
+
+    @Transaction
+    suspend fun mergeFromServer(server: List<WorkOuts>) {
+        val serverIds = server.mapNotNull { it.serverId }.toSet()
+        syncedRows().filter { it.serverId !in serverIds }.forEach { deleteById(it.id) }
+        server.forEach { remote ->
+            val serverId = remote.serverId ?: return@forEach
+            val local = getByServerId(serverId)
+            when {
+                local == null -> {
+                    val sameId = getById(serverId)
+                    if (sameId == null || sameId.syncState == SyncState.SYNCED) {
+                        insert(remote.copy(id = serverId, syncState = SyncState.SYNCED, version = 0, syncError = null))
+                    }
+                }
+                local.syncState == SyncState.SYNCED -> insert(
+                    local.copy(
+                        workOutName = remote.workOutName,
+                        workOutType = remote.workOutType,
+                        workOutImage = remote.workOutImage,
+                    )
+                )
+                else -> Unit
+            }
         }
     }
 }

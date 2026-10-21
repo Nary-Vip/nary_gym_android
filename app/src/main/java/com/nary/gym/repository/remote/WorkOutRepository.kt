@@ -72,12 +72,12 @@ class WorkOutRepository @Inject constructor(
                     workOutName = work.workOutName,
                     workOutImage = downloadImageToInternalStorage(context, work.workOutImage),
                     workOutType = WorkOutType.valueOf(work.workOutType.uppercase()),
+                    serverId = work.id,
                 )
             }
         }
 
-        // Replace (not just insert) so workouts deleted server-side also disappear locally.
-        dao.replaceAllWorkouts(workoutEntries)
+        dao.mergeFromServer(workoutEntries)
     }
 
     private suspend fun fetchAllWorkoutPages(): List<Workout> {
