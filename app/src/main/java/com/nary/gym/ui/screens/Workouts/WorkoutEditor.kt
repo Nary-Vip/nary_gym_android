@@ -49,10 +49,7 @@ import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.components.NaryTextField
 import com.nary.gym.utils.copyImageToInternalStorage
 
-/**
- * Add/edit sheet for a workout. [onDelete] (edit mode only) is the accessible alternative to
- * swipe-to-delete. [initialType] preselects the muscle group when adding from Today.
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutEditor(
@@ -61,6 +58,7 @@ fun WorkoutEditor(
     onCancel: () -> Unit,
     onDelete: ((WorkOuts) -> Unit)? = null,
     initialType: WorkOutType = WorkOutType.CHEST,
+    existingNames: Set<String> = emptySet(),
 ) {
     val context = LocalContext.current
     var draft by remember {
@@ -69,10 +67,19 @@ fun WorkoutEditor(
         )
     }
     var typeMenuOpen by remember { mutableStateOf(false) }
+    val name = draft.workOutName.trim()
+    val nameError = when {
+        name.length in 1..2 -> "At least 3 characters"
+        name in existingNames -> "You already have a workout with this name"
+        else -> null
+    }
+    val canSave = name.length >= 3 && nameError == null && (workout != null || draft.workOutImage.isNotBlank())
     var confirmDelete by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { draft = draft.copy(workOutImage = copyImageToInternalStorage(context = context, uri = it)) }
+        uri?.let { copyImageToInternalStorage(context = context, uri = it) }
+            ?.takeIf { it.isNotBlank() }
+            ?.let { draft = draft.copy(workOutImage = it) }
     }
 
     ModalBottomSheet(
@@ -114,6 +121,7 @@ fun WorkoutEditor(
                 label = "Exercise name",
                 leadingIcon = Icons.Filled.FitnessCenter,
                 placeholder = "Chest press",
+                error = nameError,
             )
             ExposedDropdownMenuBox(expanded = typeMenuOpen, onExpandedChange = { typeMenuOpen = it }) {
                 OutlinedTextField(
@@ -140,8 +148,8 @@ fun WorkoutEditor(
                 }
             }
             Button(
-                onClick = { onSave(draft) },
-                enabled = draft.workOutName.isNotBlank(),
+                onClick = { onSave(draft.copy(workOutName = name)) },
+                enabled = canSave,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Save workout") }
             if (workout != null && onDelete != null) {

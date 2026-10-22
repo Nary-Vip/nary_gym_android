@@ -61,6 +61,7 @@ import com.nary.gym.ui.components.SectionHeader
 import com.nary.gym.ui.components.StatTile
 import com.nary.gym.ui.components.WorkoutListItem
 import com.nary.gym.ui.screens.Workouts.WorkoutEditor
+import com.nary.gym.ui.screens.Workouts.namesExcept
 import com.nary.gym.utils.formatClockTime
 import com.nary.gym.utils.formatDuration
 import com.nary.gym.viewModel.TodayUiState
@@ -86,6 +87,7 @@ fun TodayScreen(
     val context = LocalContext.current
     var editing by remember { mutableStateOf<WorkOuts?>(null) }
     var adding by remember { mutableStateOf(false) }
+    val allWorkouts by workOutViewModel.allWorkouts.collectAsState()
 
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
@@ -130,6 +132,7 @@ fun TodayScreen(
             onSave = { workOutViewModel.update(it); editing = null },
             onCancel = { editing = null },
             onDelete = { workOutViewModel.delete(it); editing = null },
+            existingNames = allWorkouts.namesExcept(workout),
         )
     }
     if (adding) {
@@ -138,6 +141,7 @@ fun TodayScreen(
             initialType = state.dayType,
             onSave = { workOutViewModel.insert(it); adding = false },
             onCancel = { adding = false },
+            existingNames = allWorkouts.namesExcept(null),
         )
     }
 }

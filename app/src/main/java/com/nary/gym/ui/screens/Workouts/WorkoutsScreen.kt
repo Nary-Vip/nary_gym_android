@@ -94,6 +94,7 @@ fun WorkoutsScreen(contentPadding: PaddingValues, viewModel: WorkOutViewModel = 
             workout = null,
             onSave = { viewModel.insert(it); creating = false },
             onCancel = { creating = false },
+            existingNames = workouts.namesExcept(null),
         )
     }
     editing?.let { workout ->
@@ -102,9 +103,13 @@ fun WorkoutsScreen(contentPadding: PaddingValues, viewModel: WorkOutViewModel = 
             onSave = { viewModel.update(it); editing = null },
             onCancel = { editing = null },
             onDelete = { viewModel.delete(it); editing = null },
+            existingNames = workouts.namesExcept(workout),
         )
     }
 }
+
+fun List<WorkOuts>.namesExcept(workout: WorkOuts?): Set<String> =
+    filter { it.id != workout?.id }.map { it.workOutName.trim() }.toSet()
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable

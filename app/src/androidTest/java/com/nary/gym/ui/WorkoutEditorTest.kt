@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
@@ -24,20 +25,40 @@ class WorkoutEditorTest {
 
     private val squat = WorkOuts(id = "1", workOutName = "Squat", workOutType = WorkOutType.LEG, workOutImage = "")
 
-    @Test
-    fun add_saveDisabledUntilNamed_thenSavesWithInitialType() {
-        var saved: WorkOuts? = null
+    private fun edit(existingNames: Set<String> = emptySet()) {
         rule.setContent {
             NaryToDoTheme {
-                WorkoutEditor(workout = null, onSave = { saved = it }, onCancel = {}, initialType = WorkOutType.BACK)
+                WorkoutEditor(workout = squat, onSave = {}, onCancel = {}, existingNames = existingNames)
             }
         }
-        rule.onNodeWithText("Delete workout").assertDoesNotExist() // add mode has no delete
-        rule.onNodeWithText("Save workout").assertIsNotEnabled()
+    }
+
+    @Test
+    fun add_withNameButNoPhoto_cannotSave() {
+        rule.setContent {
+            NaryToDoTheme {
+                WorkoutEditor(workout = null, onSave = {}, onCancel = {}, initialType = WorkOutType.BACK)
+            }
+        }
+        rule.onNodeWithText("Delete workout").assertDoesNotExist()
         rule.onNodeWithText("Exercise name").performTextInput("Deadlift")
-        rule.onNodeWithText("Save workout").assertIsEnabled().performClick()
-        assertEquals("Deadlift", saved?.workOutName)
-        assertEquals(WorkOutType.BACK, saved?.workOutType)
+        rule.onNodeWithText("Save workout").assertIsNotEnabled()
+    }
+
+    @Test
+    fun shortName_showsErrorAndBlocksSave() {
+        edit()
+        rule.onNodeWithText("Squat").performTextReplacement("Sq")
+        rule.onNodeWithText("At least 3 characters").assertExists()
+        rule.onNodeWithText("Save workout").assertIsNotEnabled()
+    }
+
+    @Test
+    fun duplicateName_showsErrorAndBlocksSave() {
+        edit(existingNames = setOf("Lunge"))
+        rule.onNodeWithText("Squat").performTextReplacement("Lunge")
+        rule.onNodeWithText("You already have a workout with this name").assertExists()
+        rule.onNodeWithText("Save workout").assertIsNotEnabled()
     }
 
     @Test
