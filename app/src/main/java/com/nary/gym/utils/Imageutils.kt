@@ -6,6 +6,9 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -17,30 +20,34 @@ private const val DOWNLOAD_TIMEOUT_MS = 15_000
 private const val MAX_IMAGE_SIDE = 1600
 private const val JPEG_QUALITY = 85
 
-fun copyImageToInternalStorage(
+suspend fun copyImageToInternalStorage(
     context: Context,
     uri: Uri
 ): String {
-    val directory = File(context.filesDir, "workouts")
-    if (!directory.exists()) {
-        directory.mkdirs()
-    }
-    val file = File(directory, "${UUID.randomUUID()}.jpg")
-    val bitmap = try {
-        ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { decoder, info, _ ->
-            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-            val scale = MAX_IMAGE_SIDE.toFloat() / maxOf(info.size.width, info.size.height)
-            if (scale < 1f) {
-                decoder.setTargetSize((info.size.width * scale).roundToInt(), (info.size.height * scale).roundToInt())
+    val file = File(File(context.filesDir, "workouts"), "${UUID.randomUUID()}.jpg")
+    return try {
+        withContext(Dispatchers.IO) {
+            file.parentFile?.mkdirs()
+            val bitmap = try {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { decoder, info, _ ->
+                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                    val scale = MAX_IMAGE_SIDE.toFloat() / maxOf(info.size.width, info.size.height)
+                    if (scale < 1f) {
+                        decoder.setTargetSize((info.size.width * scale).roundToInt(), (info.size.height * scale).roundToInt())
+                    }
+                }
+            } catch (e: IOException) {
+                Log.w("Imageutils", "Failed to decode picked image", e)
+                return@withContext ""
             }
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+            bitmap.recycle()
+            file.absolutePath
         }
-    } catch (e: IOException) {
-        Log.w("Imageutils", "Failed to decode picked image", e)
-        return ""
+    } catch (e: CancellationException) {
+        file.delete()
+        throw e
     }
-    file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
-    bitmap.recycle()
-    return file.absolutePath
 }
 
 fun downloadImageToInternalStorage(

@@ -33,9 +33,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,8 @@ import com.nary.gym.core.WorkOutType
 import com.nary.gym.data.room_db.WorkOuts
 import com.nary.gym.ui.components.NaryTextField
 import com.nary.gym.utils.copyImageToInternalStorage
+import kotlinx.coroutines.launch
+import java.io.File
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +63,7 @@ fun WorkoutEditor(
     onDelete: ((WorkOuts) -> Unit)? = null,
     initialType: WorkOutType = WorkOutType.CHEST,
     existingNames: Set<String> = emptySet(),
+    pickPhoto: ((onPicked: (Uri) -> Unit) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var draft by remember {
@@ -67,20 +72,44 @@ fun WorkoutEditor(
         )
     }
     var typeMenuOpen by remember { mutableStateOf(false) }
+    var processingPhoto by remember { mutableStateOf(false) }
+    var pickedPhoto by remember { mutableStateOf<String?>(null) }
+    var saved by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val name = draft.workOutName.trim()
     val nameError = when {
         name.length in 1..2 -> "At least 3 characters"
         name in existingNames -> "You already have a workout with this name"
         else -> null
     }
-    val canSave = name.length >= 3 && nameError == null && (workout != null || draft.workOutImage.isNotBlank())
+    val canSave = name.length >= 3 && nameError == null && (workout != null || draft.workOutImage.isNotBlank()) && !processingPhoto
     var confirmDelete by remember { mutableStateOf(false) }
 
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { copyImageToInternalStorage(context = context, uri = it) }
-            ?.takeIf { it.isNotBlank() }
-            ?.let { draft = draft.copy(workOutImage = it) }
+    fun usePickedPhoto(uri: Uri) {
+        scope.launch {
+            processingPhoto = true
+            try {
+                copyImageToInternalStorage(context = context, uri = uri)
+                    .takeIf { it.isNotBlank() }
+                    ?.let { path ->
+                        pickedPhoto?.let { File(it).delete() }
+                        pickedPhoto = path
+                        draft = draft.copy(workOutImage = path)
+                    }
+            } finally {
+                processingPhoto = false
+            }
+        }
     }
+
+    DisposableEffect(Unit) {
+        onDispose { if (!saved) pickedPhoto?.let { File(it).delete() } }
+    }
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let(::usePickedPhoto)
+    }
+    val choosePhoto = { pickPhoto?.invoke(::usePickedPhoto) ?: imagePicker.launch("image/*") }
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
@@ -109,10 +138,16 @@ fun WorkoutEditor(
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 )
                 Spacer(Modifier.width(16.dp))
-                OutlinedButton(onClick = { imagePicker.launch("image/*") }) {
+                OutlinedButton(onClick = choosePhoto, enabled = !processingPhoto) {
                     Icon(Icons.Filled.Image, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (draft.workOutImage.isBlank()) "Add photo" else "Change photo")
+                    Text(
+                        when {
+                            processingPhoto -> "Preparing photo…"
+                            draft.workOutImage.isBlank() -> "Add photo"
+                            else -> "Change photo"
+                        }
+                    )
                 }
             }
             NaryTextField(
@@ -148,7 +183,10 @@ fun WorkoutEditor(
                 }
             }
             Button(
-                onClick = { onSave(draft.copy(workOutName = name)) },
+                onClick = {
+                    saved = true
+                    onSave(draft.copy(workOutName = name))
+                },
                 enabled = canSave,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Save workout") }

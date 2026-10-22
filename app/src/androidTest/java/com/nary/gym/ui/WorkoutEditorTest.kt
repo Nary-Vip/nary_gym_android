@@ -1,5 +1,14 @@
 package com.nary.gym.ui
 
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.After
+import java.io.File
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -89,5 +98,75 @@ class WorkoutEditorTest {
         rule.onNodeWithText("Delete workout").performClick()
         rule.onNodeWithText("Delete").performClick()
         assertEquals(listOf(squat), deleted)
+    }
+
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private val photoDir = File(context.filesDir, "workouts")
+    private val photosBefore = photoDir.listFiles().orEmpty().toSet()
+    private val png = File(context.cacheDir, "pick.png").apply {
+        outputStream().use { Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+    private val fakePicker: (onPicked: (Uri) -> Unit) -> Unit = { onPicked -> onPicked(Uri.fromFile(png)) }
+
+    private fun newPhotos() = photoDir.listFiles().orEmpty().toSet() - photosBefore
+
+    private fun pickAndWait() {
+        rule.onNodeWithText(if (newPhotos().isEmpty()) "Add photo" else "Change photo").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithText("Change photo").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @After
+    fun cleanUpPhotos() {
+        newPhotos().forEach { it.delete() }
+        png.delete()
+    }
+
+    @Test
+    fun add_withPhoto_savesWithInitialType_andKeepsThePhoto() {
+        var saved: WorkOuts? = null
+        rule.setContent {
+            NaryToDoTheme {
+                WorkoutEditor(
+                    workout = null, onSave = { saved = it }, onCancel = {},
+                    initialType = WorkOutType.BACK, pickPhoto = fakePicker,
+                )
+            }
+        }
+        rule.onNodeWithText("Exercise name").performTextInput("Deadlift")
+        pickAndWait()
+        rule.onNodeWithText("Save workout").assertIsEnabled().performClick()
+        assertEquals("Deadlift", saved?.workOutName)
+        assertEquals(WorkOutType.BACK, saved?.workOutType)
+        assertEquals(setOf(File(saved!!.workOutImage)), newPhotos())
+    }
+
+    @Test
+    fun pickingAgain_deletesThePreviousPhoto() {
+        var saved: WorkOuts? = null
+        rule.setContent {
+            NaryToDoTheme { WorkoutEditor(workout = squat, onSave = { saved = it }, onCancel = {}, pickPhoto = fakePicker) }
+        }
+        pickAndWait()
+        val first = newPhotos().single()
+        rule.onNodeWithText("Change photo").performClick()
+        rule.waitUntil(5_000) { newPhotos().isNotEmpty() && first !in newPhotos() }
+        rule.waitForIdle()
+        rule.onNodeWithText("Save workout").performClick()
+        assertEquals(setOf(File(saved!!.workOutImage)), newPhotos())
+    }
+
+    @Test
+    fun closingWithoutSaving_deletesThePickedPhoto() {
+        var open by mutableStateOf(true)
+        rule.setContent {
+            NaryToDoTheme {
+                if (open) WorkoutEditor(workout = squat, onSave = {}, onCancel = {}, pickPhoto = fakePicker)
+            }
+        }
+        pickAndWait()
+        assertEquals(1, newPhotos().size)
+        open = false
+        rule.waitForIdle()
+        assertEquals(emptySet<File>(), newPhotos())
     }
 }
