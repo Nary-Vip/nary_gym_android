@@ -21,6 +21,8 @@ import java.io.IOException
 import java.net.URLConnection
 import javax.inject.Inject
 
+private const val PAGE_SIZE = 50
+
 interface WorkoutRemote {
     suspend fun create(name: String, type: WorkOutType, imagePath: String): String
     suspend fun update(serverId: String, name: String, type: WorkOutType, imagePath: String)
@@ -58,15 +60,21 @@ class RetrofitWorkoutRemote @Inject constructor(
     }
 
     override suspend fun findIdByExactName(name: String): String? = call {
-        api.getAllWorkOuts(page = 1, search = name, type = null, limit = 100)
-            .workouts.firstOrNull { it.workOutName == name }?.id
+        var page = 0
+        var found: String?
+        do {
+            page++
+            val response = api.getAllWorkOuts(page = page, search = name, type = null, limit = PAGE_SIZE)
+            found = response.workouts.firstOrNull { it.workOutName == name }?.id
+        } while (found == null && response.workouts.isNotEmpty() && page < response.totalPages)
+        found
     }
 
     override suspend fun fetchAll(): List<WorkOuts> = call {
         val all = mutableListOf<com.nary.gym.data.remote.dto.Workout>()
         var page = 1
         while (true) {
-            val response = api.getAllWorkOuts(page = page, search = null, type = null, limit = 100)
+            val response = api.getAllWorkOuts(page = page, search = null, type = null, limit = PAGE_SIZE)
             all += response.workouts
             if (response.workouts.isEmpty() || page >= response.totalPages) break
             page++

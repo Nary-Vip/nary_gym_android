@@ -99,6 +99,14 @@ class RetrofitWorkoutRemoteTest {
     fun findIdByExactName_matchesCaseSensitively() = runTest {
         respond(200, """{"workouts":[{"_id":"a","workOutName":"squat","workOutType":"LEG","workOutImage":"/f/a.jpg"},{"_id":"b","workOutName":"Squat","workOutType":"LEG","workOutImage":"/f/b.jpg"}],"totalPages":1,"limit":100,"page":1,"totalWorkouts":2}""")
         assertEquals("b", remote.findIdByExactName("Squat"))
+        assertEquals("50", server.takeRequest().url.queryParameter("limit"))
+    }
+
+    @Test
+    fun findIdByExactName_looksBeyondTheFirstPage() = runTest {
+        respond(200, """{"workouts":[{"_id":"a","workOutName":"Squat 2","workOutType":"LEG","workOutImage":"/f/a.jpg"}],"totalPages":2,"limit":50,"page":1,"totalWorkouts":2}""")
+        respond(200, """{"workouts":[{"_id":"b","workOutName":"Squat","workOutType":"LEG","workOutImage":"/f/b.jpg"}],"totalPages":2,"limit":50,"page":2,"totalWorkouts":2}""")
+        assertEquals("b", remote.findIdByExactName("Squat"))
     }
 
     @Test
@@ -109,5 +117,6 @@ class RetrofitWorkoutRemoteTest {
         assertEquals(listOf("a", "b"), rows.map { it.serverId })
         assertEquals(listOf("a", "b"), rows.map { it.id })
         assertEquals(2, server.requestCount)
+        assertEquals(listOf("50", "50"), List(2) { server.takeRequest().url.queryParameter("limit") })
     }
 }
