@@ -39,8 +39,6 @@ annotation class NoAuthApi
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://nary-gym-backend.onrender.com/api/"
-
     @Provides
     @Singleton
     fun provideLoggingInterceptor():
@@ -96,7 +94,7 @@ object NetworkModule {
     ): Retrofit {
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(client)
             .addConverterFactory(
                 GsonConverterFactory.create()
@@ -111,7 +109,7 @@ object NetworkModule {
         @NoAuthClient client: OkHttpClient
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(client)
             .addConverterFactory(
                 GsonConverterFactory.create()

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -8,6 +10,14 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val apiBaseUrl: String = providers.environmentVariable("NARY_API_BASE_URL").orNull
+    ?: localProperties.getProperty("NARY_API_BASE_URL")
+    ?: error("Set NARY_API_BASE_URL (environment variable or local.properties) to the backend API base URL, ending with /")
+check(apiBaseUrl.endsWith("/")) { "NARY_API_BASE_URL must end with /" }
 
 android {
     namespace = "com.nary.gym"
@@ -20,6 +30,7 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     compileSdk = 37
